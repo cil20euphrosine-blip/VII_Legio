@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.2.9 - Guide v2 complet)
+// CONSTANTES & REGISTRES (Version v1.3.1 - Tableaux Officiels D, E, F, G, H, I, S)
 // ==========================================
-const APP_VERSION = "v1.2.9";
+const APP_VERSION = "v1.3.1";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -10,13 +10,77 @@ const SHIPS = {
   HASTA:   {level:3,cont:21,ppr:4,radMax:3,resMax:5,eqMin:6,promo:8,grade:'Consul'}
 };
 const BOUNDS = {xMin:-18,xMax:19,yMin:-12,yMax:12,zMin:1,zMax:4};
-const TAB_A = {1:['-','-','-','-','-','-','F'],2:['-','-','-','-','-','F','F'],3:['-','-','-','F','F','F','U'],4:['-','-','F','F','F','U','U'],5:['-','F','F','F','U','U','U'],6:['F','F','F','U','U','U','U']};
-const TAB_B = {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,1,1],3:[0,0,0,1,1,1,2],4:[0,0,1,1,2,2,3],5:[0,1,1,2,2,2,3],6:[1,1,2,2,3,3,4]};
+
+// Tableau A : Attaque Légion (colonnes : <=-4, -3, -2..-1, 0, +1..+2, +3..+5, >=+6)
+const TAB_A = {
+  1:['-','-','-','-','-','-','F'],
+  2:['-','-','-','-','-','F','F'],
+  3:['-','-','-','F','F','F','U'],
+  4:['-','-','F','F','F','U','U'],
+  5:['-','F','F','F','U','U','U'],
+  6:['F','F','F','U','U','U','U']
+};
+
+// Tableau B : Attaque Extrasolaires (colonnes : <=-4, -3, -2..-1, 0, +1..+2, +3..+5, >=+6)
+const TAB_B = {
+  1:[0,0,0,0,0,0,0],
+  2:[0,0,0,0,0,1,1],
+  3:[0,0,0,1,1,1,2],
+  4:[0,0,1,1,2,2,3],
+  5:[0,1,1,2,2,2,3],
+  6:[1,1,2,2,3,3,4]
+};
+
+// Tableau C : Dégâts vaisseau
 const TAB_C = {1:'bou',2:'las',3:'rad',4:'com',5:'res',6:'coque'};
-const TAB_F = {1:['N','N','N','N','-','-'],2:['N','N','N','-','-','Y'],3:['N','N','-','-','Y','Y'],4:['N','-','-','Y','Y','Y'],5:['-','-','Y','Y','Y','Y'],6:['Y','Y','Y','Y','Y','Y']};
+
+// Tableau D : Capture Non Sapiens (colonnes : <=-1, 0, +1, +2, +3..+5, >=+6)
+const TAB_D = {
+  1:['N','N','N','N','-','-'],
+  2:['N','N','N','-','-','Y'],
+  3:['N','N','-','-','Y','Y'],
+  4:['N','-','-','Y','Y','Y'],
+  5:['-','-','Y','Y','Y','Y'],
+  6:['Y','Y','Y','Y','Y','Y']
+};
+
+// Tableau E : Alliances (colonnes : Facteur d'Alliance 1, 2, 3, 4+)
+const TAB_E = {
+  1:['N','N','N','-'],
+  2:['N','N','-','Y'],
+  3:['N','-','Y','Y'],
+  4:['-','Y','Y','Y'],
+  5:['Y','Y','Y','Y'],
+  6:['Y','Y','Y','Y']
+};
+
+// Tableau F : Intimidation (colonnes : <=-1, 0, +1, +2, +3..+5, >=+6)
+const TAB_F = {
+  1:['N','N','N','N','-','-'],
+  2:['N','N','N','-','-','Y'],
+  3:['N','N','-','-','Y','Y'],
+  4:['N','-','-','Y','Y','Y'],
+  5:['-','-','Y','Y','Y','Y'],
+  6:['Y','Y','Y','Y','Y','Y']
+};
+
+// Tableau G : Points de vénération (Intimidation réussie)
 const TAB_G = {1:2,2:2,3:3,4:3,5:4,6:4};
+
+// Tableau H : Commerce (Mode de Base)
 const TAB_H = {1:-2,2:-1,3:0,4:0,5:2,6:3};
-const TAB_I = {1:[-1,-1,-1,-2,-3,-3],2:[null,0,0,-1,-2,-2],3:[null,1,1,0,null,-1],4:[1,2,2,0,2,null],5:[2,3,2,2,3,4],6:[2,4,3,3,4,5]};
+
+// Tableau I : Commerce (Mode Avancé : D6 croisé avec Personnalité 0 à 5)
+const TAB_I = {
+  1:[-1,-1,-1,-2,-3,-3],
+  2:[null,0,0,-1,-2,-2],
+  3:[null,1,1,0,null,-1],
+  4:[1,2,2,0,2,null],
+  5:[2,3,2,2,3,4],
+  6:[2,4,3,3,4,5]
+};
+
+// Tableau Prise de la Pierre ROTSA (NILBOG pacifiques, colonnes : 1 à 5 équipages)
 const TAB_ROTSA = {
   1:[null,null,null,null,null],
   2:[null,null,null,null,null],
@@ -25,6 +89,7 @@ const TAB_ROTSA = {
   5:[10,5,5,5,null],
   6:[15,10,10,10,10]
 };
+
 const PLANET_O = {A:2,B:1,C:null,D:1,E:null,F:1,G:3,H:4};
 const ZONES = ['Désert','Pyramides','Village','Marais','Forêt','Eau','Glace'];
 const dirVectors = {'N':{x:0,y:1},'NE':{x:1,y:1},'E':{x:1,y:0},'SE':{x:1,y:-1},'S':{x:0,y:-1},'SO':{x:-1,y:-1},'O':{x:-1,y:0},'NO':{x:-1,y:1}};
@@ -36,9 +101,9 @@ const RACES = {
   "LITOFAGUS": {"cat": "NON_SAPIENS", "type": "MONSTRA", "ref": "1/3", "missions": ["ELIMINATION"], "fc": 5, "valeurElim": 3, "valeurCapture": null, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["PYRAMIDES"], "bonus": 1}, "milieuNonViable": ["FORET", "EAU", "MARAIS"], "presences": [{"des": [1, 2, 3, 4], "nombre": 2}, {"des": [5], "nombre": 4}, {"des": [6], "nombre": 6}], "notes": "Peut détruire les combinaisons des équipages à terre. Attaque les vaisseaux à défaut. Ne survit pas en captivité."},
   "SPHAERAE": {"cat": "NON_SAPIENS", "type": "MONSTRA", "ref": "1/4", "missions": ["ELIMINATION"], "fc": null, "valeurElim": 5, "valeurCapture": null, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["DESERT", "GLACE"], "bonus": null}, "milieuNonViable": ["EAU", "PYRAMIDES"], "presences": [{"des": [1, 2], "nombre": 6}, {"des": [3, 4, 5], "nombre": 10}, {"des": [6], "nombre": 20}], "notes": "Attaquent directement le vaisseau. Armes à air sans effet. F.C. selon masse : 0,5 contre équipage, 1 à 2,5 contre vaisseau (niv. 0 à 3)."},
   "NUBIS_ARENAE": {"cat": "NON_SAPIENS", "type": "MONSTRA", "ref": "1/5", "missions": ["ELIMINATION"], "fc": null, "valeurElim": 6, "valeurCapture": null, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["DESERT"], "bonus": null}, "milieuNonViable": ["EAU", "FORET"], "presences": [{"des": [1, 2], "nombre": 1}, {"des": [3, 4], "nombre": 2}, {"des": [5, 6], "nombre": 3}], "notes": "Dans le désert, toujours 3 N.A. Aucune arme n'agit sauf SIL 4 (désintégration auto). N'attaquent pas les équipages à terre."},
-  "SUBTERRANEI": {"cat": "NON_SAPIENS", "type": "NON_VISIBLE", "ref": "1/6", "missions": ["ELIMINATION", "CAPTURE"], "fc": 8, "valeurElim": 3, "valeurCapture": 16, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["MARAIS"], "bonus": 2}, "milieuNonViable": ["EAU", "GLACE"], "presences": [{"des": [1, 2], "nombre": 1}, {"des": [3, 4, 5], "nombre": 2}, {"des": [6], "nombre": 3}], "notes": "Invisibles. Attaquent surtout les vaisseaux atterris, sauf attaque préventive des équipages."},
-  "AERIFORMI": {"cat": "NON_SAPIENS", "type": "NON_VISIBLE", "ref": "1/7", "missions": ["ELIMINATION"], "fc": 2, "valeurElim": 5, "valeurCapture": null, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["FORET"], "bonus": 3}, "milieuNonViable": ["VILLAGE", "EAU"], "presences": [{"des": [1, 2], "nombre": 1}, {"des": [3], "nombre": 2}, {"des": [4], "nombre": 3}, {"des": [5, 6], "nombre": 5}], "notes": "Invisibles. Se désintègrent sur boucliers activés ; sans bouclier, tuent tout l'équipage à bord. Détruits seulement par laser ou SIL 4."},
-  "MIMESIS": {"cat": "NON_SAPIENS", "type": "NON_VISIBLE", "ref": "1/8", "missions": ["ELIMINATION"], "fc": 6, "valeurElim": 5, "valeurCapture": null, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["GLACE", "DESERT"], "bonus": 1}, "milieuNonViable": ["FORET"], "presences": [{"des": [1, 2, 3, 4], "nombre": 1}, {"des": [5, 6], "nombre": 2}], "notes": "Invisibles. Ne peuvent pas être capturés vivants."},
+  "SUBTERRANEI": {"cat": "NON_SAPIENS", "type": "NON_VISIBLES", "ref": "1/6", "missions": ["ELIMINATION", "CAPTURE"], "fc": 8, "valeurElim": 3, "valeurCapture": 16, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["MARAIS"], "bonus": 2}, "milieuNonViable": ["EAU", "GLACE"], "presences": [{"des": [1, 2], "nombre": 1}, {"des": [3, 4, 5], "nombre": 2}, {"des": [6], "nombre": 3}], "notes": "Invisibles. Attaquent surtout les vaisseaux atterris, sauf attaque préventive des équipages."},
+  "AERIFORMI": {"cat": "NON_SAPIENS", "type": "NON_VISIBLES", "ref": "1/7", "missions": ["ELIMINATION"], "fc": 2, "valeurElim": 5, "valeurCapture": null, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["FORET"], "bonus": 3}, "milieuNonViable": ["VILLAGE", "EAU"], "presences": [{"des": [1, 2], "nombre": 1}, {"des": [3], "nombre": 2}, {"des": [4], "nombre": 3}, {"des": [5, 6], "nombre": 5}], "notes": "Invisibles. Se désintègrent sur boucliers activés ; sans bouclier, tuent tout l'équipage à bord. Détruits seulement par laser ou SIL 4."},
+  "MIMESIS": {"cat": "NON_SAPIENS", "type": "NON_VISIBLES", "ref": "1/8", "missions": ["ELIMINATION"], "fc": 6, "valeurElim": 5, "valeurCapture": null, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["GLACE", "DESERT"], "bonus": 1}, "milieuNonViable": ["FORET"], "presences": [{"des": [1, 2, 3, 4], "nombre": 1}, {"des": [5, 6], "nombre": 2}], "notes": "Invisibles. Ne peuvent pas être capturés vivants."},
   "LIANA_NIGRA": {"cat": "NON_SAPIENS", "type": "VELENOSI", "ref": "2/1", "missions": ["ELIMINATION", "CAPTURE"], "fc": 2, "valeurElim": 2, "valeurCapture": 6, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["FORET", "MARAIS"], "bonus": 3}, "milieuNonViable": ["PYRAMIDES"], "presences": [{"des": [1, 2], "nombre": 1}, {"des": [3, 4, 5], "nombre": 2}, {"des": [6], "nombre": 3}], "notes": "Venimeux (pertes doublées). Ne s'approche jamais des vaisseaux."},
   "BAVOSUS": {"cat": "NON_SAPIENS", "type": "VELENOSI", "ref": "2/2", "missions": ["ELIMINATION", "CAPTURE"], "fc": 15, "valeurElim": 6, "valeurCapture": 20, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["DESERT"], "bonus": 2}, "milieuNonViable": ["FORET", "MARAIS"], "presences": [{"des": [1, 2, 3, 4], "nombre": 1}, {"des": [5, 6], "nombre": 2}], "notes": "Venimeux. N'attaquent pas les équipages tant qu'ils n'ouvrent pas le feu. Éliminés par laser : 0 pt si tirage pair."},
   "RADICALES": {"cat": "NON_SAPIENS", "type": "VELENOSI", "ref": "2/3", "missions": ["ELIMINATION", "CAPTURE"], "fc": 10, "valeurElim": 5, "valeurCapture": 15, "valeurAlliance": null, "fAlliance": null, "niveauTech": null, "milieuPrefere": {"nom": ["FORET", "MARAIS"], "bonus": 8}, "milieuNonViable": ["DESERT", "GLACE"], "presences": [{"des": [1, 2, 3, 4], "nombre": 1}, {"des": [5, 6], "nombre": 2}], "notes": "Venimeux. Éliminés au laser : 0 pt si tirage pair."},
@@ -138,7 +203,7 @@ let state = {
   shieldsOn:true, shieldsLocked:false, hullHitsThisTurn:0,
   personality:0, risks:null, savant:0,
   menGround:0, crewGround:0, hasGroundCrew:false, landedTurns:0, menLost:0, mission:null, missionResult:null,
-  currentAliens:0, alienWounded:0, missionUsed:false,
+  currentAliens:0, alienWounded:0, missionUsed:false, allianceFails:0, commTurns:0, landingBehavior:null,
   debugLogs:[], travelHistory:[]
 };
 
@@ -161,11 +226,14 @@ function alienFC(){
   if(state.alienRace === 'SIPCO') return (state.menGround || 3) + 2;
   if(state.alienRace === 'ATTLERS') return (state.menGround || 3) + d6();
   if(state.alienRace === 'CRONOS') return (state.menGround || 3) * d6();
-  if(state.alienRace === 'SPHAERAE') return Math.max(1, Math.round((state.menGround || 3) * 0.5));
+  if(state.alienRace === 'SPHAERAE'){
+    if(state.hasGroundCrew) return Math.max(1, Math.round((state.menGround || 3) * 0.5));
+    return Math.round((1 + cls().level * 0.5) * (state.currentAliens || 1));
+  }
   return (r && typeof r.fc==='number') ? r.fc : ALIEN_FC;
 }
 
-// Création dynamique des boutons de mission manquants dans le DOM (Alliance, Capture, ROTSA, Duel)
+// Création dynamique des boutons de mission dans le DOM
 function ensureMissionButtons(){
   let btnAlliance = document.getElementById('btn-alliance');
   if(!btnAlliance){
@@ -176,7 +244,7 @@ function ensureMissionButtons(){
         b.classList.remove('disabled');
         b.setAttribute('onclick', 'startAlliance()');
         const desc = b.querySelector('.m-desc');
-        if(desc) desc.innerText = 'Civiles ou Super Civiles · tableau I (E)';
+        if(desc) desc.innerText = 'Civiles ou Super Civiles · tableau E';
         btnAlliance = b;
       }
     });
@@ -189,7 +257,7 @@ function ensureMissionButtons(){
     const d = document.createElement('div');
     d.className = 'mission-btn'; d.id = 'btn-capture'; d.style.display = 'none';
     d.setAttribute('onclick', 'startCapture()');
-    d.innerHTML = '<div><span class="m-title">Capture d\'Extrasolaire</span><span class="m-desc">Capture vivant · valeur selon le Guide</span></div><span class="m-tab">CAPT.</span>';
+    d.innerHTML = '<div><span class="m-title">Capture d\'Extrasolaire</span><span class="m-desc">Non Sapiens · mains nues / filets · tableau D</span></div><span class="m-tab">TAB. D</span>';
     container.insertBefore(d, reembarkBtn);
   }
   if(!document.getElementById('btn-rotsa')){
@@ -205,6 +273,14 @@ function ensureMissionButtons(){
     d.setAttribute('onclick', 'startDuel()');
     d.innerHTML = '<div><span class="m-title">Duel d\'honneur</span><span class="m-desc">Combat singulier · 1 équipage contre champion</span></div><span class="m-tab">DUEL</span>';
     container.insertBefore(d, reembarkBtn);
+  }
+  if(!document.getElementById('btn-switch-to-ground')){
+    const b = document.createElement('button');
+    b.className = 'btn-primary'; b.id = 'btn-switch-to-ground';
+    b.style.cssText = 'display:none;margin-top:10px;background:var(--dark-teal);';
+    b.setAttribute('onclick', 'switchToGroundMode()');
+    b.innerText = 'Couper les boucliers pour débarquer (C/D)';
+    container.insertBefore(b, reembarkBtn);
   }
 }
 
@@ -508,6 +584,7 @@ function renderShip(){
   document.getElementById('ship-title').innerText=`${state.shipClass} « MARTHIA » · niveau ${c.level}`;
   document.querySelectorAll('#tab-vaisseau .stat-row > .counter > button, .module-row .counter button').forEach(b=>b.disabled=state.isInFlight);
   document.getElementById('display-shields').innerText=`Boucliers : ${state.shieldsOn?'Activés':'Désactivés'}`;
+  document.getElementById('display-shields').className=`status-item ${state.shieldsOn?'active':'danger'}`;
 }
 
 function setShields(on){
@@ -532,6 +609,19 @@ function hitShip(n){
     const key={bou:'shields',las:'lasers',rad:'radars',com:'computers',res:'tanks'}[el];
     if(state.ship[key]>0){ state.ship[key]--; log('SPACE COMPUTER',`Dégât : un élément « ${el} » est détruit.`); }
     else log('SPACE COMPUTER',`Dégât sur « ${el} » absent du vaisseau : ignoré.`);
+  }
+  // Risque de mort de l'officier savant en cas de dégâts (50% : pair/impair)
+  if(n > 0 && state.savant > 0){
+    const dSav = d6();
+    if(dSav % 2 === 1){
+      const malus = state.savant;
+      state.points -= malus;
+      state.savant = 0;
+      const sel = document.getElementById('savant-select');
+      if(sel) sel.value = "0";
+      document.getElementById('display-points').innerText = state.points;
+      log('SPACE COMPUTER', `<b>Décès de l'Officier Savant</b> lors de l'impact (dé ${dSav} impair) : −${malus} point(s).`);
+    }
   }
   renderShip(); updateRouteLimits();
 }
@@ -886,14 +976,108 @@ function requestInfo(id){
 // ==========================================
 function hideAllMissionBtns(){
   ensureMissionButtons();
-  ['btn-combat','btn-intim','btn-comm','btn-sci','btn-alliance','btn-capture','btn-rotsa','btn-duel'].forEach(id=>{
+  ['btn-combat','btn-intim','btn-comm','btn-sci','btn-alliance','btn-capture','btn-rotsa','btn-duel','btn-switch-to-ground'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.style.display='none';
   });
 }
 
+function setupPlanetEncounter(){
+  const p = state.currentPlanet;
+  if(!p) return;
+  const ch = ensureChain(p);
+  const raceId = ch.race;
+  state.alienRace = raceId;
+  const isObjectPlanet = (ch.tcode === 'OZ' || ch.tcode === 'SECOR');
+  const isSine = (ch.forme === 'SINE');
+
+  if(!state.encounterRolled){
+    state.currentAliens = (raceId && !isObjectPlanet && !isSine) ? rollPresence(raceId) : 0;
+    if(raceId === 'NUBIS_ARENAE' && state.currentAliens === 0) state.currentAliens = 3;
+    state.alienWounded = 0;
+    state.encounterRolled = true;
+  }
+
+  const r = raceId ? RACES[raceId] : null;
+  let fcStr = alienFC();
+  if(raceId === 'SPHAERAE') fcStr = '0.5 (équipage) / 1 à 2.5 (vaisseau)';
+  if(raceId === 'NORMO') fcStr = 'Égal à F.C. Légion';
+  if(raceId === 'SIPCO') fcStr = 'Défense Légion (+2 Att)';
+  if(raceId === 'ATTLERS') fcStr = 'Défense Légion (+1D6 Att)';
+  if(raceId === 'CRONOS') fcStr = 'Légion × 1D6';
+
+  document.getElementById('alien-title').innerText = isObjectPlanet ? TCODE_NAME[ch.tcode] : (isSine ? 'Planète sans vie' : (r ? raceId.replace(/_/g,' ') : 'Aucun Extrasolaire'));
+  document.getElementById('alien-sub').innerText = isObjectPlanet ? 'Objet à ramasser par un équipage à terre' : (isSine ? 'Aucune présence' : (r ? `${r.type.replace(/_/g,' ')} · F.C. ${fcStr}` : 'Pas de race sur cette planète'));
+  document.getElementById('alien-count').innerText = state.currentAliens;
+  document.getElementById('alien-wounded').innerText = state.alienWounded;
+}
+
+function updateMissionButtonsVisibility(){
+  ensureMissionButtons();
+  hideAllMissionBtns();
+  const p = state.currentPlanet;
+  if(!p) return;
+  const ch = ensureChain(p);
+  const raceId = ch.race;
+  const r = raceId ? RACES[raceId] : null;
+  const isObjectPlanet = (ch.tcode === 'OZ' || ch.tcode === 'SECOR');
+  const hasAliens = !isObjectPlanet && state.currentAliens > 0 && r;
+
+  if(!state.hasGroundCrew){
+    if(state.landingBehavior === 'B' && hasAliens && r.missions.includes('ELIMINATION') && state.ship.lasers > 0){
+      const btnC = document.getElementById('btn-combat');
+      if(btnC){
+        btnC.style.display = 'flex';
+        const title = btnC.querySelector('.m-title');
+        if(title) title.innerText = 'Élimination (Tir Lasers de bord ZIP 11)';
+      }
+    }
+    const switchBtn = document.getElementById('btn-switch-to-ground');
+    if(switchBtn && state.ship.crew > 0){
+      switchBtn.style.display = 'block';
+    }
+    return;
+  }
+
+  const btnC = document.getElementById('btn-combat');
+  if(btnC){
+    const title = btnC.querySelector('.m-title');
+    if(title) title.innerText = 'Élimination physique';
+  }
+
+  const allowElim = hasAliens && r.missions.includes('ELIMINATION');
+  const allowCapt = hasAliens && r.missions.includes('CAPTURE') && !state.missionUsed;
+  const allowIntim = hasAliens && r.missions.includes('INTIMIDATION') && !state.missionUsed;
+  const allowComm = hasAliens && r.missions.includes('COMMERCE') && state.commTurns < 2;
+  const allowSci = hasAliens && r.missions.includes('RECHERCHE_SCIENTIFIQUE') && !state.missionUsed;
+  const allowAlliance = hasAliens && r.missions.includes('ALLIANCE') && !state.missionUsed && state.allianceFails < 2;
+  const allowRotsa = hasAliens && r.missions.includes('ROTSA') && !state.missionUsed;
+  const allowDuel = hasAliens && r.missions.includes('DUEL') && !state.missionUsed;
+
+  document.getElementById('btn-combat').style.display = allowElim ? 'flex' : 'none';
+  document.getElementById('btn-intim').style.display = allowIntim ? 'flex' : 'none';
+  document.getElementById('btn-comm').style.display = allowComm ? 'flex' : 'none';
+  document.getElementById('btn-sci').style.display = allowSci ? 'flex' : 'none';
+  if(document.getElementById('btn-alliance')) document.getElementById('btn-alliance').style.display = allowAlliance ? 'flex' : 'none';
+  if(document.getElementById('btn-capture')) document.getElementById('btn-capture').style.display = allowCapt ? 'flex' : 'none';
+  if(document.getElementById('btn-rotsa')) document.getElementById('btn-rotsa').style.display = allowRotsa ? 'flex' : 'none';
+  if(document.getElementById('btn-duel')) document.getElementById('btn-duel').style.display = allowDuel ? 'flex' : 'none';
+}
+
+function switchToGroundMode(){
+  state.shieldsOn = false;
+  state.landingBehavior = 'D';
+  const chk = document.getElementById('check-shields');
+  if(chk) chk.checked = false;
+  document.getElementById('landing-shields').innerText = 'Désactivés';
+  renderShip();
+  log('OFFICIER COMMANDANT', 'Je coupe les boucliers SOK 9 pour permettre le débarquement des équipages.');
+  document.getElementById('mission-panel').style.display = 'none';
+  document.getElementById('ground-actions').style.display = 'block';
+}
+
 function prepareLanding(planet){
   if(planet.done){ alert('Cette planète est déjà connue : elle ne rapporte plus de points.'); return; }
-  state.currentPlanet=planet; state.crewGround=0; state.menGround=0; state.hasGroundCrew=false; state.landedTurns=0; state.menLost=0; state.missionResult=null; state.mission=null; state.missionUsed=false;
+  state.currentPlanet=planet; state.crewGround=0; state.menGround=0; state.hasGroundCrew=false; state.landedTurns=0; state.menLost=0; state.missionResult=null; state.mission=null; state.missionUsed=false; state.allianceFails=0; state.commTurns=0; state.encounterRolled=false; state.landingBehavior=null;
   disembarkCount = Math.min(1, state.ship.crew);
   updateDisembarkUI();
   state.isInFlight = false;
@@ -907,6 +1091,8 @@ function prepareLanding(planet){
   document.getElementById('behavior-selection').style.display='block';
   document.getElementById('combat-log').style.display='none';
   document.getElementById('landing-status').innerText=`Atterrissage sur la Planète #${planet.id} (niveau ${planet.z}).`;
+  document.getElementById('landing-shields').innerText = state.shieldsOn ? 'Activés' : 'Désactivés';
+  document.getElementById('landing-crew').innerText = `${state.ship.crew} à bord`;
   document.querySelectorAll('input[name="attitude"]').forEach(r=>r.checked=false);
   document.getElementById('behavior-alert').style.display='none';
   addDebugLog(`Atterrissage sur Planète #${planet.id}`);
@@ -926,28 +1112,50 @@ function changeDisembarkCount(delta){
 function checkAttitude(){
   const v=document.querySelector('input[name="attitude"]:checked').value;
   const al=document.getElementById('behavior-alert');
-  if(v==='A'||v==='B'){ al.style.display='block'; al.innerText='Boucliers activés : aucun débarquement possible. Le comportement A ou B n\'autorise pas les équipages à terre.'; }
-  else if(!state.shieldsOn){ al.style.display='block'; al.innerText='Les boucliers sont désactivés pour ce tour, comme exigé par C ou D.'; }
-  else { al.style.display='block'; al.innerText='Les comportements C et D exigent des boucliers éteints : décochez-les sur l\'onglet Route (fixation au début du tour).'; }
+  if(v==='A'){ al.style.display='block'; al.innerText='Comportement A : Boucliers activés, sans tir. Aucun débarquement tant que les boucliers sont actifs.'; }
+  else if(v==='B'){ al.style.display='block'; al.innerText='Comportement B : Boucliers activés, tir laser depuis le vaisseau (ZIP 11).'; }
+  else { al.style.display='block'; al.innerText=`Comportement ${v} : Les boucliers seront désactivés pour permettre le débarquement des équipages à terre.`; }
 }
 
 function confirmBehavior(){
   const v=document.querySelector('input[name="attitude"]:checked');
   if(!v) return alert('Choisissez un comportement.');
   const b=v.value, needOn=(b==='A'||b==='B');
-  if(needOn!==state.shieldsOn){ return alert(needOn?'Le comportement A ou B exige des boucliers activés pour ce tour.':'Le comportement C ou D exige des boucliers éteints pour ce tour.'); }
-  log('OFFICIER COMMANDANT',`Comportement d'atterrissage : ${b}.`);
+  state.landingBehavior = b;
+  state.shieldsOn = needOn;
+  const chk = document.getElementById('check-shields');
+  if(chk) chk.checked = needOn;
+  renderShip();
+
+  log('OFFICIER COMMANDANT',`Comportement d'atterrissage : ${b} (Boucliers ${needOn?'activés':'désactivés'}).`);
   completePlanetInfo(state.currentPlanet);
+  setupPlanetEncounter();
+
   document.getElementById('landing-shields').innerText=needOn?'Activés':'Désactivés';
   document.getElementById('behavior-selection').style.display='none';
   document.getElementById('op-box').style.display='block';
   hideAllMissionBtns();
+
   if(needOn){
-    log('SPACE COMPUTER','Boucliers activés : débarquement interdit, les équipages restent à bord.');
+    if(state.alienRace === 'AERIFORMI' && state.currentAliens > 0){
+      const pts = addSecorOrOzBonus(RACES.AERIFORMI.valeurElim);
+      state.currentAliens = 0;
+      state.missionResult = {key:'elim', points:pts};
+      document.getElementById('alien-count').innerText = 0;
+      log('SPACE COMPUTER', `Les Aeriformi se désintègrent automatiquement au contact de vos boucliers SOK 9 activés ! (+${pts} pts)`);
+      logCombat(`<b>Boucliers SOK 9 :</b> Désintégration automatique des Aeriformi (+${pts} pts).`);
+    }
+    log('SPACE COMPUTER', b==='B' ? 'Boucliers activés : tir laser de bord autorisé.' : 'Boucliers activés : les équipages restent à bord.');
     document.getElementById('mission-panel').style.display='block';
+    updateMissionButtonsVisibility();
     document.getElementById('btn-reembark').style.display='none';
     document.getElementById('btn-orbit').style.display='block';
   } else {
+    if(state.alienRace === 'AERIFORMI' && state.currentAliens > 0){
+      log('SPACE COMPUTER', '<b>ALERTE AERIFORMI :</b> Sans boucliers activés, le gaz toxique envahit le vaisseau !');
+      shipDestroyed();
+      return;
+    }
     log('SPACE COMPUTER','Boucliers désactivés : prêt pour le débarquement.');
     document.getElementById('ground-actions').style.display='block';
   }
@@ -982,8 +1190,6 @@ function disembark(){
   
   ensureMissionButtons();
   const toLand = Math.min(disembarkCount, state.ship.crew);
-  const raceId = currentRace();
-  state.alienRace = raceId;
   
   state.ship.crew -= toLand;
   state.crewGround += toLand;
@@ -998,52 +1204,17 @@ function disembark(){
   document.getElementById('ground-actions').style.display='none';
   document.getElementById('mission-panel').style.display='block';
   
+  setupPlanetEncounter();
   const ch = ensureChain(state.currentPlanet);
+  const raceId = currentRace();
   const isObjectPlanet = (ch.tcode === 'OZ' || ch.tcode === 'SECOR');
   const hasBonusObject = (ch.tcode === 'NSOZ' || ch.tcode === 'NSSECOR');
 
-  state.currentAliens = (raceId && !isObjectPlanet) ? rollPresence(raceId) : 0;
-  if(raceId === 'NUBIS_ARENAE' && state.currentAliens === 0) state.currentAliens = 3;
-  state.alienWounded = 0;
-  
-  const r = raceId ? RACES[raceId] : null;
-  let fcStr = alienFC();
-  if(raceId === 'SPHAERAE') fcStr = 'Variable (masse)';
-  if(raceId === 'NORMO') fcStr = 'Égal à F.C. Légion';
-  if(raceId === 'SIPCO') fcStr = 'Défense Légion (+2 Att)';
-  if(raceId === 'ATTLERS') fcStr = 'Défense Légion (+1D6 Att)';
-  if(raceId === 'CRONOS') fcStr = 'Légion × 1D6';
+  updateMissionButtonsVisibility();
 
-  document.getElementById('alien-title').innerText = isObjectPlanet ? TCODE_NAME[ch.tcode] : (r ? raceId.replace(/_/g,' ') : 'Aucun Extrasolaire');
-  document.getElementById('alien-sub').innerText = isObjectPlanet ? 'Objet à ramasser (sans race)' : (r ? `${r.type.replace(/_/g,' ')} · F.C. ${fcStr}` : 'Pas de race sur cette planète');
-  document.getElementById('alien-count').innerText = state.currentAliens;
-  document.getElementById('alien-wounded').innerText = 0;
-  
-  // Affichage de TOUTES les missions prévues par la fiche du Guide des Rencontres
-  const hasAliens = !isObjectPlanet && state.currentAliens > 0 && r;
-  const allowElim = hasAliens && r.missions.includes('ELIMINATION');
-  const allowCapt = hasAliens && r.missions.includes('CAPTURE');
-  const allowIntim = hasAliens && r.missions.includes('INTIMIDATION');
-  const allowComm = hasAliens && r.missions.includes('COMMERCE') && ch.nature !== 'AGRESSIVE';
-  const allowSci = hasAliens && r.missions.includes('RECHERCHE_SCIENTIFIQUE');
-  const allowAlliance = hasAliens && r.missions.includes('ALLIANCE');
-  const allowRotsa = hasAliens && r.missions.includes('ROTSA') && ch.nature !== 'AGRESSIVE';
-  const allowDuel = hasAliens && r.missions.includes('DUEL');
-
-  document.getElementById('btn-combat').style.display = allowElim ? 'flex' : 'none';
-  document.getElementById('btn-intim').style.display = allowIntim ? 'flex' : 'none';
-  document.getElementById('btn-comm').style.display = allowComm ? 'flex' : 'none';
-  document.getElementById('btn-sci').style.display = allowSci ? 'flex' : 'none';
-  if(document.getElementById('btn-alliance')) document.getElementById('btn-alliance').style.display = allowAlliance ? 'flex' : 'none';
-  if(document.getElementById('btn-capture')) document.getElementById('btn-capture').style.display = allowCapt ? 'flex' : 'none';
-  if(document.getElementById('btn-rotsa')) document.getElementById('btn-rotsa').style.display = allowRotsa ? 'flex' : 'none';
-  if(document.getElementById('btn-duel')) document.getElementById('btn-duel').style.display = allowDuel ? 'flex' : 'none';
-
-  // 1. Journaliser d'abord l'ordre et la mise à terre (pour respecter l'ordre chronologique avec prepend)
   log('OFFICIER COMMANDANT', `Je débarque ${toLand} équipage(s) (${toLand*3} hommes).`);
   log('SPACE COMPUTER', `${state.menGround} homme(s) à terre.`);
 
-  // 2. Ensuite, vérifier la récupération d'objet (OZ = 2 pts, SECOR = 4 pts selon le Guide)
   if(isObjectPlanet && state.hasGroundCrew){
     const objPts = (ch.tcode === 'SECOR') ? 4 : 2;
     state.mission = 'object';
@@ -1055,12 +1226,10 @@ function disembark(){
       const bPts = (ch.tcode === 'NSSECOR') ? 4 : 2;
       log('SPACE COMPUTER', `Présence de ${TCODE_NAME[ch.tcode]} : +${bPts} points bonus seront ajoutés si la mission réussit.`);
     }
-    // Toujours permettre le réembarquement si l'officier souhaite évacuer ou après mission
     document.getElementById('btn-reembark').style.display = state.hasGroundCrew ? 'flex' : 'none';
   }
 
   document.getElementById('btn-orbit').style.display = 'none';
-  
   addDebugLog(`Débarquement : ${state.menGround} hommes (${isObjectPlanet?'Objet à ramasser':(raceId||'aucun')}).`);
 }
 
@@ -1069,13 +1238,17 @@ function checkGroundStatusAfterCombat(){
   document.getElementById('alien-wounded').innerText = state.alienWounded;
   state.hasGroundCrew = state.menGround > 0;
   
-  if(!state.hasGroundCrew){
+  if(!state.hasGroundCrew && state.landingBehavior !== 'B' && state.landingBehavior !== 'A'){
     log('SPACE COMPUTER', '<b>Tous les équipages à terre ont été éliminés.</b> Réembarquement impossible.');
     document.getElementById('btn-reembark').style.display = 'none';
     hideAllMissionBtns();
     document.getElementById('btn-orbit').style.display = 'block';
-  } else {
+  } else if(state.hasGroundCrew) {
+    updateMissionButtonsVisibility();
     document.getElementById('btn-reembark').style.display = 'flex';
+  } else {
+    updateMissionButtonsVisibility();
+    document.getElementById('btn-orbit').style.display = 'block';
   }
 }
 
@@ -1088,18 +1261,70 @@ function addSecorOrOzBonus(pts){
 }
 
 function startCombat(){
-  if(state.menGround <= 0) return;
   if(state.currentAliens <= 0){ log('SPACE COMPUTER', "Plus d'Extrasolaire à combattre."); return; }
   
+  if(!state.hasGroundCrew && state.landingBehavior === 'B'){
+    if(state.ship.lasers <= 0) return alert('Aucun laser fixe ZIP 11 opérationnel à bord.');
+    state.mission = 'elim';
+    const fcShipAtt = state.ship.lasers * 6;
+    const fcTarget = alienFC();
+    const diff = fcShipAtt - fcTarget;
+    const r = d6();
+    const res = TAB_A[r][colIndex(diff)];
+    recordOp('A', 'Tir Lasers de bord ZIP 11', {dé:r, diff:diff, colonne:colIndex(diff)}, res, '');
+    log('OFFICIER COMMANDANT', `J'ordonne le feu avec les lasers de bord ZIP 11 (F.C. ${fcShipAtt}).`);
+
+    if(res === 'U'){
+      state.currentAliens--;
+      logCombat(`<b>Tir de bord (Tableau A) · dé ${r} · diff ${diff>=0?'+':''}${diff}</b><br>U : un Extrasolaire est détruit.`);
+    } else if(res === 'F'){
+      state.alienWounded++;
+      logCombat(`<b>Tir de bord (Tableau A) · dé ${r} · diff ${diff>=0?'+':''}${diff}</b><br>F : un Extrasolaire est blessé.`);
+    } else {
+      logCombat(`<b>Tir de bord (Tableau A) · dé ${r} · diff ${diff>=0?'+':''}${diff}</b><br>Aucun effet.`);
+    }
+
+    if(state.currentAliens <= 0 && state.alienRace){
+      let rv = RACES[state.alienRace].valeurElim || 3;
+      if((state.alienRace === 'BAVOSUS' || state.alienRace === 'RADICALES') && r % 2 === 0){
+        rv = 0;
+        log('SPACE COMPUTER', 'Élimination par laser (tirage pair) : le spécimen est calciné (0 pt).');
+      } else if(state.alienRace === 'GIGANS' && r % 2 === 1){
+        rv = 0;
+        log('SPACE COMPUTER', 'Le Gigans prend feu sous l\'effet du laser (tirage impair : 0 pt).');
+      }
+      const pts = addSecorOrOzBonus(rv);
+      state.missionResult = {key:'elim', points:pts};
+      const c = cls();
+      const net = Math.max(0, pts - c.level);
+      state.points += net;
+      document.getElementById('display-points').innerText = state.points;
+      log('SPACE COMPUTER', `Tous les ${state.alienRace.replace(/_/g,' ')} ont été éliminés depuis le bord (+${net} pt(s) nets).`);
+    } else if(state.currentAliens > 0){
+      const diffShip = alienFC() - shipDefence();
+      const rRip = d6();
+      const deg = TAB_B[rRip][colIndex(diffShip)];
+      recordOp('B', 'Riposte contre le vaisseau', {dé:rRip, diff:diffShip}, deg+' dégât(s)', '');
+      if(deg > 0){
+        log('SPACE COMPUTER', `Les Extrasolaires ripostent contre le vaisseau : ${deg} dégât(s) !`);
+        hitShip(deg);
+      } else {
+        log('SPACE COMPUTER', `Les boucliers SOK 9 absorbent la riposte des Extrasolaires.`);
+      }
+    }
+    checkGroundStatusAfterCombat();
+    return;
+  }
+
+  if(state.menGround <= 0) return;
   state.mission = 'elim';
   
   const forme = state.currentPlanet.chain ? state.currentPlanet.chain.forme : null;
   let fcModules = 0;
-  if(state.ship.mod_zip3 > 0) fcModules += state.ship.mod_zip3 * 5;
+  if(state.ship.mod_zip3 > 0) fcModules += state.ship.mod_zip3 * (state.alienRace === 'TRONCIDI' ? 10 : 5);
   if(state.ship.mod_ho12 > 0 && state.alienRace !== 'SPHAERAE') fcModules += state.ship.mod_ho12 * ({ANI:6, VEG:4, MIN:3}[forme] || 3);
   if(state.ship.mod_sil4 > 0) fcModules += state.ship.mod_sil4 * ((forme === 'MIN') ? 6 : 3);
 
-  // Règle spéciale NUBIS ARENAE : seul SIL 4 agit et les désintègre instantanément
   if(state.alienRace === 'NUBIS_ARENAE'){
     if(state.ship.mod_sil4 > 0){
       state.currentAliens = 0;
@@ -1115,7 +1340,21 @@ function startCombat(){
     }
   }
 
-  const fcLegion = state.menGround + fcModules;
+  let fcLegion = state.menGround + fcModules;
+  const r0 = state.alienRace ? RACES[state.alienRace] : null;
+  const ch = state.currentPlanet ? state.currentPlanet.chain : null;
+  if(r0 && r0.type === 'NON_VISIBLES' && ch && ch.nature === 'PACIFIQUE'){
+    fcLegion = Math.floor(fcLegion / 2);
+  }
+
+  if(r0 && r0.type === 'NON_VISIBLES' && ch && ch.nature === 'AGRESSIVE'){
+    riposte();
+    if(state.menGround <= 0){
+      checkGroundStatusAfterCombat();
+      return;
+    }
+  }
+
   const fcTarget = alienFC();
   const diff = fcLegion - fcTarget;
   
@@ -1142,42 +1381,62 @@ function startCombat(){
     log('SPACE COMPUTER', `Tous les ${state.alienRace.replace(/_/g,' ')} ont été éliminés (valeur : ${pts} pts).`);
   }
   
-  if(state.currentAliens > 0){
+  if(state.currentAliens > 0 && !(r0 && r0.type === 'NON_VISIBLES' && ch && ch.nature === 'AGRESSIVE')){
     riposte();
   }
   
   checkGroundStatusAfterCombat();
 }
 
+// Tableau D officiel : Capture d'une créature Non Sapiens (sans armes individuelles)
 function startCapture(){
   if(state.menGround <= 0 || state.missionUsed) return;
   const rid = currentRace(), r0 = rid ? RACES[rid] : null;
   if(!r0 || !r0.missions.includes('CAPTURE')) return alert('Capture impossible pour cette espèce.');
-  state.mission = 'capture'; state.missionUsed = true;
+  state.mission = 'capture';
   
-  log('OFFICIER COMMANDANT', `J'ordonne la capture d'un spécimen de ${rid.replace(/_/g,' ')}.`);
-  // En capture, l'Extrasolaire se défend d'abord (riposte), puis si l'équipage survit et dépasse ou maîtrise la créature, la capture réussit
-  riposte();
-  if(state.menGround > 0){
-    const d = d6();
-    const diff = state.menGround - alienFC();
-    const res = TAB_A[d][colIndex(diff)];
-    recordOp('Capture', 'Tentative de capture', {dé:d, diff:diff}, res, '');
-    if(res === 'U' || res === 'F' || d >= 3){
-      const pts = addSecorOrOzBonus(r0.valeurCapture || 10);
-      state.missionResult = {key:'capture', points:pts};
-      state.currentAliens = Math.max(0, state.currentAliens - 1);
-      logCombat(`<b>Capture réussie (dé ${d}) !</b> Spécimen ${rid.replace(/_/g,' ')} maîtrisé : <b>+${pts} points</b>.`);
-      log('SPACE COMPUTER', `Spécimen ${rid.replace(/_/g,' ')} capturé vivant (${pts} pts). Prêt pour le réembarquement.`);
-      if(document.getElementById('btn-capture')) document.getElementById('btn-capture').style.display = 'none';
-    } else {
-      logCombat(`<b>Capture échouée (dé ${d}) :</b> Le spécimen repousse les équipes. Vous pouvez réessayer.`);
-      state.missionUsed = false;
+  const ch = state.currentPlanet ? state.currentPlanet.chain : null;
+  const isHostile = ch && ch.nature === 'AGRESSIVE';
+  log('OFFICIER COMMANDANT', `J'ordonne la capture à mains nues / filets d'un spécimen de ${rid.replace(/_/g,' ')} (Tableau D).`);
+
+  // Si l'Extrasolaire est Hostile, la Légion subit d'abord une attaque (Tableau B)
+  if(isHostile){
+    log('SPACE COMPUTER', `Le ${rid.replace(/_/g,' ')} est hostile : il attaque avant que les filets ne soient lancés !`);
+    riposte();
+    if(state.menGround <= 0){
+      checkGroundStatusAfterCombat();
+      return;
     }
+  }
+
+  // Calcul F.C. Capture Légion : hommes seuls (sans armes individuelles) + Personnalité en mode Avancé
+  const persBonus = state.level === 'AVANCE' ? (state.personality || 0) : 0;
+  const fcCaptureLegion = state.menGround + persBonus;
+  const diff = fcCaptureLegion - alienFC();
+  const d = d6();
+  const res = TAB_D[d][colIndexF(diff)];
+  recordOp('D', 'Tentative de capture', {dé:d, diff:diff}, res, '');
+
+  if(res === 'Y'){
+    state.missionUsed = true;
+    const pts = addSecorOrOzBonus(r0.valeurCapture || 10);
+    state.missionResult = {key:'capture', points:pts};
+    state.currentAliens = Math.max(0, state.currentAliens - 1);
+    logCombat(`<b>Tableau D · dé ${d} · diff ${diff>=0?'+':''}${diff} : OUI (Δ) !</b><br>Spécimen ${rid.replace(/_/g,' ')} capturé vivant : <b>+${pts} points</b>.`);
+    log('SPACE COMPUTER', `Capture réussie (${pts} pts). Réembarquez au moins 1 équipage complet pour valider les points.`);
+  } else if(res === 'N'){
+    state.missionUsed = true;
+    logCombat(`<b>Tableau D · dé ${d} · diff ${diff>=0?'+':''}${diff} : NON (▲) !</b><br>La créature s'affole, devient agressive et attaque immédiatement !`);
+    riposte();
+    state.missionResult = {key:'capture', points:0};
+  } else {
+    logCombat(`<b>Tableau D · dé ${d} · diff ${diff>=0?'+':''}${diff} : − (Sans effet)</b><br>La créature se dérobe sans attaquer. Vous pouvez retenter au tour suivant.`);
+    state.missionUsed = false;
   }
   checkGroundStatusAfterCombat();
 }
 
+// Tableau F et G : Intimidation
 function startIntim(){
   if(state.menGround<=0||state.missionUsed) return;
   const r0=currentRace()?RACES[currentRace()]:null;
@@ -1187,26 +1446,50 @@ function startIntim(){
   const r=d6(), res=TAB_F[r][colIndexF(diff)];
   recordOp('F','Intimidation',{dé:r,diff:diff},res,'');
   if(res==='Y'){ const g=d6(); const pts = addSecorOrOzBonus(TAB_G[g]); recordOp('G','Points de vénération',{dé:g},pts+' pt(s)','');
-    state.missionResult={key:'intim',points:pts}; logCombat(`<b>Tableau F · dé ${r}</b> : oui. <b>Tableau G</b> (S.C.) : ${pts} point(s) de vénération.`); }
-  else if(res==='N'){ logCombat(`<b>Tableau F · dé ${r}</b> : non. Les Extrasolaires deviennent agressifs et contre-attaquent.`); riposte(); state.missionResult={key:'intim',points:0}; }
-  else { logCombat(`<b>Tableau F · dé ${r}</b> : aucun effet. Nouvel essai au tour suivant.`); state.missionUsed=false; }
-  document.getElementById('btn-intim').style.display='none';
+    state.missionResult={key:'intim',points:pts}; logCombat(`<b>Tableau F · dé ${r} : OUI (Δ).</b> <b>Tableau G</b> : ${pts} point(s) de vénération.`); }
+  else if(res==='N'){ logCombat(`<b>Tableau F · dé ${r} : NON (▲).</b> Les Extrasolaires deviennent agressifs et contre-attaquent.`); riposte(); state.missionResult={key:'intim',points:0}; }
+  else { logCombat(`<b>Tableau F · dé ${r} : − (Aucun effet).</b> Nouvel essai possible au tour suivant.`); state.missionUsed=false; }
   checkGroundStatusAfterCombat();
 }
 
+// Tableaux H (Base) et I (Avancé) : Commerce (limité à 2 tours consécutifs)
 function startComm(){
-  if(state.menGround<=0||state.missionUsed) return;
+  if(state.menGround<=0||state.commTurns>=2) return;
   const rid=currentRace(), r0=rid?RACES[rid]:null;
   if(!r0 || !r0.missions.includes('COMMERCE')) return alert('Commerce non autorisé pour cette race.');
-  state.mission='comm'; state.missionUsed=true;
-  const r=d6(), v=TAB_H[r];
-  recordOp('H','Commerce',{dé:r},v,'');
-  log('OFFICIER COMMANDANT', `J'engage des échanges commerciaux avec les ${rid.replace(/_/g,' ')}.`);
-  const pts = v > 0 ? addSecorOrOzBonus(v) : v;
-  state.missionResult={key:'comm',points:pts};
-  logCombat(`<b>Tableau H · dé ${r}</b> : ${pts>0?'+':''}${pts} point(s)${v<0?' (pertes assimilées à des dégâts)':''}.`);
-  if(v<0) hitShip(-v);
-  document.getElementById('btn-comm').style.display='none';
+  state.mission='comm'; state.commTurns++;
+  const r=d6();
+  log('OFFICIER COMMANDANT', `J'engage des échanges commerciaux avec les ${rid.replace(/_/g,' ')} (Tour commercial ${state.commTurns}/2).`);
+
+  if(state.level === 'AVANCE'){
+    const pIdx = Math.max(0, Math.min(5, state.personality || 0));
+    const v = TAB_I[r][pIdx];
+    recordOp('I','Commerce (Avancé)',{dé:r,personnalité:pIdx},v===null?'0':v,'');
+    if(v === null || v === 0){
+      logCombat(`<b>Tableau I (Commerce Avancé) · dé ${r} (pers. ${pIdx})</b> : Échange infructueux (0 point).`);
+      if(!state.missionResult) state.missionResult={key:'comm',points:0};
+    } else if(v < 0){
+      logCombat(`<b>Tableau I (Commerce Avancé) · dé ${r} (pers. ${pIdx})</b> : Transaction défavorable (${v} pts, assimilés à ${-v} dégât(s) sur le vaisseau) !`);
+      hitShip(-v);
+      state.missionResult={key:'comm',points:0};
+    } else {
+      const pts = addSecorOrOzBonus(v);
+      state.missionResult={key:'comm',points:(state.missionResult?state.missionResult.points:0)+pts};
+      logCombat(`<b>Tableau I (Commerce Avancé) · dé ${r} (pers. ${pIdx})</b> : Bénéfice commercial de <b>+${pts} point(s)</b> !`);
+    }
+  } else {
+    const v = TAB_H[r];
+    recordOp('H','Commerce (Base)',{dé:r},v,'');
+    if(v < 0){
+      logCombat(`<b>Tableau H · dé ${r}</b> : ${v} point(s) (transaction défavorable assimilée à ${-v} dégât(s) sur le vaisseau).`);
+      hitShip(-v);
+      state.missionResult={key:'comm',points:0};
+    } else {
+      const pts = v > 0 ? addSecorOrOzBonus(v) : 0;
+      state.missionResult={key:'comm',points:(state.missionResult?state.missionResult.points:0)+pts};
+      logCombat(`<b>Tableau H · dé ${r}</b> : ${pts>0?'+':''}${pts} point(s) de commerce.`);
+    }
+  }
   checkGroundStatusAfterCombat();
 }
 
@@ -1230,7 +1513,6 @@ function startRotsa(){
     log('SPACE COMPUTER', `Pierre ROTSA capturée : +${totalPts} points.`);
     state.missionResult={key:'rotsa',points:totalPts};
   }
-  if(document.getElementById('btn-rotsa')) document.getElementById('btn-rotsa').style.display='none';
   checkGroundStatusAfterCombat();
 }
 
@@ -1254,53 +1536,63 @@ function startDuel(){
     state.missionResult = {key:'duel', points:0};
     logCombat(`<b>Duel d'honneur · dé ${r}</b> : Défaite. 1 légionnaire est tombé au combat.`);
   }
-  if(document.getElementById('btn-duel')) document.getElementById('btn-duel').style.display='none';
   checkGroundStatusAfterCombat();
 }
 
+// Tableau E officiel : Négociation d'Alliance (F. Alliance 1 à 4 croisé avec D6 - Personnalité)
 function startAlliance(){
-  if(state.menGround<=0||state.missionUsed) return;
+  if(state.menGround<=0||state.missionUsed||state.allianceFails>=2) return;
   const rid=currentRace(), r0=rid?RACES[rid]:null;
   if(!r0 || !r0.missions.includes('ALLIANCE')) return alert('Alliance non autorisée pour cette race.');
-  state.mission='alliance'; state.missionUsed=true;
-  const r=d6();
-  const pIdx = Math.max(0, Math.min(5, state.personality || 0));
-  const v = TAB_I[r][pIdx];
-  recordOp('I','Alliance',{dé:r,personnalité:pIdx},v===null?'Refus':v,'');
-  log('OFFICIER COMMANDANT', "Je propose un traité d'alliance aux Extrasolaires.");
-  if(v === null){
-    logCombat(`<b>Tableau d'Alliance · dé ${r} (pers. ${pIdx})</b> : Refus d'alliance. Les Extrasolaires ripostent.`);
+  state.mission='alliance';
+
+  const rawDie = d6();
+  const persMod = state.level === 'AVANCE' ? (state.personality || 0) : 0;
+  const modDie = Math.max(1, Math.min(6, rawDie - persMod));
+  const fAll = Math.max(1, Math.min(4, r0.fAlliance || 2));
+  const res = TAB_E[modDie][fAll - 1];
+
+  recordOp('E','Alliance',{dé:rawDie, déMod:modDie, fAlliance:fAll},res,'');
+  log('OFFICIER COMMANDANT', `Je propose un traité d'alliance aux ${rid.replace(/_/g,' ')} (F. Alliance ${fAll}).`);
+
+  if(res === 'Y'){
+    state.missionUsed = true;
+    const pts = addSecorOrOzBonus(r0.valeurAlliance || 6);
+    logCombat(`<b>Tableau E · dé ${rawDie}${persMod?` (− pers. ${persMod} = ${modDie})`:''} · F.All ${fAll} : OUI (Δ) !</b><br>Alliance conclue ! Gain de <b>+${pts} point(s)</b>.`);
+    log('SPACE COMPUTER', `Traité d'alliance ratifié avec ${rid.replace(/_/g,' ')} : +${pts} point(s).`);
+    state.missionResult={key:'alliance',points:pts};
+  } else if(res === 'N'){
+    state.missionUsed = true;
+    state.allianceFails++;
+    logCombat(`<b>Tableau E · dé ${rawDie}${persMod?` (− pers. ${persMod} = ${modDie})`:''} · F.All ${fAll} : NON (▲) !</b><br>Rupture diplomatique ! Les ${rid.replace(/_/g,' ')} attaquent immédiatement sans riposte possible ce tour.`);
     riposte();
     state.missionResult={key:'alliance',points:0};
-  } else if(v < 0){
-    logCombat(`<b>Tableau d'Alliance · dé ${r} (pers. ${pIdx})</b> : Traité rejeté (${v}). Hostilités déclenchées !`);
-    riposte();
-    state.missionResult={key:'alliance',points:v};
   } else {
-    const bonusGuide = r0.valeurAlliance || v;
-    const pts = addSecorOrOzBonus(Math.max(v, bonusGuide));
-    logCombat(`<b>Tableau d'Alliance · dé ${r} (pers. ${pIdx})</b> : Alliance conclue ! Gain de <b>+${pts} point(s)</b>.`);
-    log('SPACE COMPUTER', `Alliance signée avec ${rid.replace(/_/g,' ')} : +${pts} point(s) de mission.`);
-    state.missionResult={key:'alliance',points:pts};
+    state.allianceFails++;
+    logCombat(`<b>Tableau E · dé ${rawDie}${persMod?` (− pers. ${persMod} = ${modDie})`:''} · F.All ${fAll} : − (En pause)</b><br>Négociations en attente (${state.allianceFails}/2 essais). Vous pouvez refaire une tentative.`);
+    if(state.allianceFails >= 2){
+      log('SPACE COMPUTER', 'Deux tentatives d\'alliance infructueuses : l\'alliance est désormais impossible sur cette planète.');
+      state.missionUsed = true;
+    }
   }
-  if(document.getElementById('btn-alliance')) document.getElementById('btn-alliance').style.display='none';
   checkGroundStatusAfterCombat();
 }
 
+// Tableau S officiel : Score = D6 + Niveau du Savant - Niveau Technologique (NT) (plancher 0, plafond 8)
 function startSci(){
   if(state.menGround<=0||state.missionUsed) return;
   const rid=currentRace(), r=rid?RACES[rid]:null;
   if(!r || !r.missions.includes('RECHERCHE_SCIENTIFIQUE')) return alert('Recherche scientifique non autorisée pour cette race.');
   const tech = (typeof r.niveauTech === 'number') ? r.niveauTech : 7;
-  // Permet la recherche même en mode BASE (avec valeur de savant par défaut 2 si non embarqué, ou savant embarqué en AVANCÉ)
   const savBonus = state.savant > 0 ? state.savant : 3;
   state.mission='sci'; state.missionUsed=true;
-  const d=d6(), pts=addSecorOrOzBonus(Math.max(1, d + savBonus - Math.floor(tech/2)));
+  const d=d6();
+  const rawPts = Math.min(8, Math.max(0, d + savBonus - tech));
+  const pts = rawPts > 0 ? addSecorOrOzBonus(rawPts) : 0;
   recordOp('S','Recherche scientifique',{dé:d,savant:savBonus,technologie:tech},pts,'');
-  log('OFFICIER COMMANDANT', `J'ordonne une mission de recherche scientifique auprès des ${rid.replace(/_/g,' ')}.`);
+  log('OFFICIER COMMANDANT', `J'ordonne une mission de recherche scientifique auprès des ${rid.replace(/_/g,' ')} (NT = ${tech}).`);
   state.missionResult={key:'sci',points:pts};
-  logCombat(`<b>Tableau S (Recherche) · dé ${d}</b> (Tech. ${tech}) : Recherche fructueuse, gain de <b>+${pts} point(s)</b>.`);
-  document.getElementById('btn-sci').style.display='none';
+  logCombat(`<b>Tableau S · dé ${d} + savant ${savBonus} − NT ${tech} = ${rawPts} pt(s)</b> (plafond 8, plancher 0)${pts>rawPts?` (+${pts-rawPts} bonus objet)`:''}.`);
   checkGroundStatusAfterCombat();
 }
 
@@ -1310,7 +1602,7 @@ function riposte(){
   const rid = currentRace();
   const r0 = rid ? RACES[rid] : null;
   let fcAtt = alienFC();
-  if(rid === 'GIGANS') fcAtt = 10; // Note Guide 2/5 : F.C. Att contre E = 10
+  if(rid === 'GIGANS') fcAtt = 10;
 
   const diff = fcAtt - state.menGround;
   const r = d6();
@@ -1320,7 +1612,6 @@ function riposte(){
     const ipnoticiMap = {1:2, 2:2, 3:4, 4:4, 5:6, 6:6};
     pertes = ipnoticiMap[pertes] !== undefined ? ipnoticiMap[pertes] : pertes;
   } else if(r0 && r0.type === 'VELENOSI' && pertes > 0){
-    // Règle particulière Velenosi (Végétales et Animales) : pertes doublées (1->2, 2->4, 3->6...)
     pertes = pertes * 2;
   }
 
@@ -1357,7 +1648,7 @@ function reembark(){
     document.getElementById('display-points').innerText = state.points;
     log('SPACE COMPUTER', `Mission validée : ${state.missionResult.points} point(s) − niveau ${c.level} = ${net>=0?'+':''}${net}.`);
   } else {
-    log('SPACE COMPUTER', `Aucun point : ${state.landedTurns<1?'pas de tour à terre':'aucun équipage complet réembarqué'}${!state.missionResult?' ou mission non résolue':''}.`);
+    log('SPACE COMPUTER', `Aucun point : ${state.landedTurns<1?'pas de tour à terre':'aucun équipage complet (3 hommes) réembarqué'}${!state.missionResult?' ou mission non résolue':''}.`);
   }
   
   if(state.menLost > 0 && c.level >= 2){

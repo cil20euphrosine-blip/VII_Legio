@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.2.7)
+// CONSTANTES & REGISTRES (Version v1.2.8)
 // ==========================================
-const APP_VERSION = "v1.2.7";
+const APP_VERSION = "v1.2.8";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -75,7 +75,7 @@ const L6 = {
 const L6KEY = {
   ANI:{SUB_CIVILES:'ANI_SUB',CIVILES:'ANI_CIV',SUPER_CIVILES:'ANI_SUP',VELENOSI:'ANI_VEL',MONSTRA:'ANI_MON'},
   MIN:{MONSTRA:'MIN_MON',NON_VISIBLES:'MIN_NV'},
-  VEG:{VELENOSI:'VEG_VEL',MONSTRA:'MONSTRA',SUB_CIVILES:'VEG_SUB',CIVILES:'VEG_CIV',SUPER_CIVILES:'VEG_SUP'}
+  VEG:{VELENOSI:'VEG_VEL',MONSTRA:'VEG_MON',SUB_CIVILES:'VEG_SUB',CIVILES:'VEG_CIV',SUPER_CIVILES:'VEG_SUP'}
 };
 const FORME_NAME = {MIN:'Minérale',VEG:'Végétale',ANI:'Animale',SINE:'Sans vie'};
 const TCODE_NAME = {NS:'Non Sapiens',SAP:'Sapiens',OZ:'Minerai OZ',NSOZ:'Non Sapiens + OZ',SECOR:'Plantes SECOR',NSSECOR:'Non Sapiens + SECOR'};
@@ -114,6 +114,25 @@ function ensureChain(p){ if(!p.chain) p.chain={letter:null,rad:null,forme:null,t
 function alienFC(){
   const r=state.alienRace? RACES[state.alienRace] : null;
   return (r && typeof r.fc==='number') ? r.fc : ALIEN_FC;
+}
+
+// Helper pour récupérer ou initialiser dynamiquement le bouton Alliance dans le DOM
+function getAllianceBtn(){
+  let btn = document.getElementById('btn-alliance');
+  if(!btn){
+    const allBtns = document.querySelectorAll('#mission-panel .mission-btn');
+    allBtns.forEach(b => {
+      if(b.innerText.includes('Alliance')){
+        b.id = 'btn-alliance';
+        b.classList.remove('disabled');
+        b.setAttribute('onclick', 'startAlliance()');
+        const desc = b.querySelector('.m-desc');
+        if(desc) desc.innerText = 'Civiles ou Super Civiles · tableau I (E)';
+        btn = b;
+      }
+    });
+  }
+  return btn;
 }
 
 function colIndex(diff){ if(diff<=-4)return 0; if(diff===-3)return 1; if(diff<=-1)return 2; if(diff===0)return 3; if(diff<=2)return 4; if(diff<=5)return 5; return 6; }
@@ -841,6 +860,7 @@ function confirmBehavior(){
   document.getElementById('landing-shields').innerText=needOn?'Activés':'Désactivés';
   document.getElementById('behavior-selection').style.display='none';
   document.getElementById('op-box').style.display='block';
+  const btnAlliance = getAllianceBtn();
   if(needOn){
     log('SPACE COMPUTER','Boucliers activés : débarquement interdit, les équipages restent à bord.');
     document.getElementById('mission-panel').style.display='block';
@@ -848,6 +868,7 @@ function confirmBehavior(){
     document.getElementById('btn-intim').style.display='none';
     document.getElementById('btn-comm').style.display='none';
     document.getElementById('btn-sci').style.display='none';
+    if(btnAlliance) btnAlliance.style.display='none';
     document.getElementById('btn-reembark').style.display='none';
     document.getElementById('btn-orbit').style.display='block';
   } else {
@@ -918,17 +939,28 @@ function disembark(){
   document.getElementById('alien-count').innerText = state.currentAliens;
   document.getElementById('alien-wounded').innerText = 0;
   
-  const allowElim = r ? r.missions.includes('ELIMINATION') : true;
-  document.getElementById('btn-combat').style.display = (!isObjectPlanet && state.currentAliens > 0 && allowElim) ? 'flex' : 'none';
-  document.getElementById('btn-intim').style.display = (!isObjectPlanet && r && r.cat==='SAPIENS') ? 'flex' : 'none';
-  document.getElementById('btn-comm').style.display = (!isObjectPlanet && r && r.cat==='SAPIENS' && ch.nature==='MARCHAND') ? 'flex' : 'none';
-  document.getElementById('btn-sci').style.display = (state.level==='AVANCE' && state.savant>0 && !isObjectPlanet) ? 'flex' : 'none';
+  // Affichage strict selon les missions autorisées par la race dans le Guide
+  const allowElim = r ? r.missions.includes('ELIMINATION') : false;
+  const allowIntim = r ? r.missions.includes('INTIMIDATION') : false;
+  const allowComm = r ? (r.missions.includes('COMMERCE') && ch.nature === 'MARCHAND') : false;
+  const allowSci = r ? (r.missions.includes('RECHERCHE_SCIENTIFIQUE') && state.level === 'AVANCE' && state.savant > 0) : false;
+  const allowAlliance = r ? r.missions.includes('ALLIANCE') : false;
 
-  // 1. Journaliser d'abord l'ordre et la mise à terre (pour que l'ordre chronologique soit respecté avec prepend)
+  document.getElementById('btn-combat').style.display = (!isObjectPlanet && state.currentAliens > 0 && allowElim) ? 'flex' : 'none';
+  document.getElementById('btn-intim').style.display = (!isObjectPlanet && state.currentAliens > 0 && allowIntim) ? 'flex' : 'none';
+  document.getElementById('btn-comm').style.display = (!isObjectPlanet && state.currentAliens > 0 && allowComm) ? 'flex' : 'none';
+  document.getElementById('btn-sci').style.display = (!isObjectPlanet && state.currentAliens > 0 && allowSci) ? 'flex' : 'none';
+  
+  const btnAlliance = getAllianceBtn();
+  if(btnAlliance){
+    btnAlliance.style.display = (!isObjectPlanet && state.currentAliens > 0 && allowAlliance) ? 'flex' : 'none';
+  }
+
+  // 1. Journaliser d'abord l'ordre et la mise à terre (pour respecter l'ordre chronologique avec prepend)
   log('OFFICIER COMMANDANT', `Je débarque ${toLand} équipage(s) (${toLand*3} hommes).`);
   log('SPACE COMPUTER', `${state.menGround} homme(s) à terre.`);
 
-  // 2. Ensuite seulement, vérifier la récupération d'objet si l'équipage est bien au sol
+  // 2. Ensuite, vérifier la récupération d'objet si l'équipage est bien au sol
   if(isObjectPlanet && state.hasGroundCrew){
     state.mission = 'object';
     state.missionResult = {key: ch.tcode, points: 2};
@@ -947,6 +979,7 @@ function checkGroundStatusAfterCombat(){
   document.getElementById('alien-count').innerText = state.currentAliens;
   document.getElementById('alien-wounded').innerText = state.alienWounded;
   state.hasGroundCrew = state.menGround > 0;
+  const btnAlliance = getAllianceBtn();
   
   if(!state.hasGroundCrew){
     log('SPACE COMPUTER', '<b>Tous les équipages à terre ont été éliminés.</b> Réembarquement impossible.');
@@ -955,6 +988,7 @@ function checkGroundStatusAfterCombat(){
     document.getElementById('btn-intim').style.display = 'none';
     document.getElementById('btn-comm').style.display = 'none';
     document.getElementById('btn-sci').style.display = 'none';
+    if(btnAlliance) btnAlliance.style.display = 'none';
     document.getElementById('btn-orbit').style.display = 'block';
   } else {
     document.getElementById('btn-reembark').style.display = 'flex';
@@ -1008,7 +1042,7 @@ function startCombat(){
 function startIntim(){
   if(state.menGround<=0||state.missionUsed) return;
   const r0=currentRace()?RACES[currentRace()]:null;
-  if(!r0 || r0.cat!=='SAPIENS' || (r0.type!=='SUB_CIVILES' && r0.type!=='CIVILES')) return alert('Intimidation réservée aux Sapiens Sub Civiles ou Civiles.');
+  if(!r0 || !r0.missions.includes('INTIMIDATION')) return alert('Intimidation non autorisée pour cette race.');
   state.mission='intim'; state.missionUsed=true;
   const diff=(state.menGround) - alienFC();
   const r=d6(), res=TAB_F[r][colIndexF(diff)];
@@ -1025,7 +1059,7 @@ function startComm(){
   if(state.menGround<=0||state.missionUsed) return;
   const r0=currentRace()?RACES[currentRace()]:null;
   const marchand = state.currentPlanet.chain && state.currentPlanet.chain.nature==='MARCHAND';
-  if(!r0 || !marchand || r0.cat!=='SAPIENS' || (r0.type!=='SUB_CIVILES' && r0.type!=='CIVILES')) return alert('Commerce réservé aux Sapiens Sub Civiles ou Civiles marchands.');
+  if(!r0 || !marchand || !r0.missions.includes('COMMERCE')) return alert('Commerce réservé aux races autorisées de nature Marchand.');
   state.mission='comm'; state.missionUsed=true;
   const r=d6(), v=TAB_H[r];
   recordOp('H','Commerce',{dé:r},v,'');
@@ -1033,6 +1067,34 @@ function startComm(){
   logCombat(`<b>Tableau H · dé ${r}</b> : ${v>0?'+':''}${v} point(s)${v<0?' (pertes assimilées à des dégâts)':''}.`);
   if(v<0) hitShip(-v);
   document.getElementById('btn-comm').style.display='none';
+  checkGroundStatusAfterCombat();
+}
+
+function startAlliance(){
+  if(state.menGround<=0||state.missionUsed) return;
+  const rid=currentRace(), r0=rid?RACES[rid]:null;
+  if(!r0 || !r0.missions.includes('ALLIANCE')) return alert('Alliance non autorisée pour cette race.');
+  state.mission='alliance'; state.missionUsed=true;
+  const r=d6();
+  const pIdx = Math.max(0, Math.min(5, state.personality || 0));
+  const v = TAB_I[r][pIdx];
+  recordOp('I','Alliance',{dé:r,personnalité:pIdx},v===null?'Refus':v,'');
+  log('OFFICIER COMMANDANT', "Je propose un traité d'alliance aux Extrasolaires.");
+  if(v === null){
+    logCombat(`<b>Tableau d'Alliance · dé ${r} (pers. ${pIdx})</b> : Refus d'alliance. Les Extrasolaires ripostent.`);
+    riposte();
+    state.missionResult={key:'alliance',points:0};
+  } else if(v < 0){
+    logCombat(`<b>Tableau d'Alliance · dé ${r} (pers. ${pIdx})</b> : Traité rompu (${v}). Hostilités déclenchées !`);
+    riposte();
+    state.missionResult={key:'alliance',points:v};
+  } else {
+    logCombat(`<b>Tableau d'Alliance · dé ${r} (pers. ${pIdx})</b> : Alliance conclue ! Gain de <b>+${v} point(s)</b>.`);
+    log('SPACE COMPUTER', `Alliance signée avec ${rid.replace(/_/g,' ')} : +${v} point(s) de mission.`);
+    state.missionResult={key:'alliance',points:v};
+  }
+  const btnAlliance = getAllianceBtn();
+  if(btnAlliance) btnAlliance.style.display='none';
   checkGroundStatusAfterCombat();
 }
 
@@ -1066,7 +1128,7 @@ function reembark(){
   if(!state.hasGroundCrew) return alert('Plus aucun homme à terre à réembarquer.');
   
   log('OFFICIER COMMANDANT','J\'ordonne le réembarquement.');
-  if(state.currentAliens > 0) riposte();
+  if(state.currentAliens > 0 && state.mission !== 'alliance') riposte();
   
   const c = cls();
   const complete = Math.floor(state.menGround / 3);
@@ -1456,7 +1518,7 @@ function startSci(){
   if(state.level!=='AVANCE') return;
   if(!state.savant) return alert('Aucun officier savant embarqué.');
   const rid=currentRace(), r=rid?RACES[rid]:null;
-  if(!r || r.cat!=='SAPIENS' || (r.type!=='SUB_CIVILES' && r.type!=='CIVILES')) return alert('Recherche scientifique : formes de vie Sub Civiles ou Civiles uniquement.');
+  if(!r || !r.missions.includes('RECHERCHE_SCIENTIFIQUE')) return alert('Recherche scientifique non autorisée pour cette race.');
   if(typeof r.niveauTech!=='number') return alert('Niveau technologique non renseigné dans le Guide pour cette race : recherche impossible.');
   state.mission='sci'; state.missionUsed=true;
   const d=d6(), pts=Math.max(0, d+state.savant-r.niveauTech);
@@ -1475,6 +1537,7 @@ if(verEl) {
   verEl.innerText = APP_VERSION;
 }
 
+getAllianceBtn();
 document.getElementById('dev-tools').style.display = DEBUG ? 'block' : 'none';
 document.getElementById('level-select').value=state.level;
 startGame();

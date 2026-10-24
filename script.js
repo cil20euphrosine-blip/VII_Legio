@@ -93,7 +93,7 @@ let state = {
   planets:[], currentPlanet:null, computersUsedThisTurn:0, observablePlanets:[],
   shieldsOn:true, shieldsLocked:false, hullHitsThisTurn:0,
   personality:0, risks:null, savant:0,
-  menGround:0, crewGround:0, landedTurns:0, menLost:0, mission:null, missionResult:null,
+  menGround:0, crewGround:0, hasGroundCrew:false, landedTurns:0, menLost:0, mission:null, missionResult:null,
   currentAliens:0, alienWounded:0, missionUsed:false,
   debugLogs:[], travelHistory:[]
 };
@@ -453,7 +453,7 @@ function shipDestroyed(){
   state.shipClass=nc; state.maxContainers=SHIPS[nc].cont; state.points=0;
   state.ship={crew:SHIPS[nc].eqMin,shields:1,lasers:1,radars:2,computers:1,tanks:3,modules:0,mod_zip3:0,mod_ho12:0,mod_sil4:0};
   state.position={...state.basePos}; state.isInFlight=false; state.shieldsLocked=false; state.shieldsOn=true;
-  state.menGround=0; state.crewGround=0; state.menLost=0; state.mission=null; state.missionResult=null; state.currentPlanet=null;
+  state.menGround=0; state.crewGround=0; state.hasGroundCrew=false; state.menLost=0; state.mission=null; state.missionResult=null; state.currentPlanet=null;
   document.getElementById('display-points').innerText=0;
   document.getElementById('display-status').innerText='À la Base';
   document.getElementById('landing-content').style.display='none';
@@ -793,7 +793,7 @@ function requestInfo(id){
 // ==========================================
 function prepareLanding(planet){
   if(planet.done){ alert('Cette planète est déjà connue : elle ne rapporte plus de points.'); return; }
-  state.currentPlanet=planet; state.crewGround=0; state.menGround=0; state.landedTurns=0; state.menLost=0; state.missionResult=null; state.mission=null; state.missionUsed=false;
+  state.currentPlanet=planet; state.crewGround=0; state.menGround=0; state.hasGroundCrew=false; state.landedTurns=0; state.menLost=0; state.missionResult=null; state.mission=null; state.missionUsed=false;
   disembarkCount = Math.min(1, state.ship.crew);
   updateDisembarkUI();
   state.isInFlight = false;
@@ -890,6 +890,7 @@ function disembark(){
   state.ship.crew -= toLand;
   state.crewGround += toLand;
   state.menGround += toLand * 3;
+  state.hasGroundCrew = state.menGround > 0;
   state.landedTurns = 1;
   
   state.isInFlight = false;
@@ -923,7 +924,12 @@ function disembark(){
   document.getElementById('btn-comm').style.display = (!isObjectPlanet && r && r.cat==='SAPIENS' && ch.nature==='MARCHAND') ? 'flex' : 'none';
   document.getElementById('btn-sci').style.display = (state.level==='AVANCE' && state.savant>0 && !isObjectPlanet) ? 'flex' : 'none';
 
-  if(isObjectPlanet){
+  // 1. Journaliser d'abord l'ordre et la mise à terre (pour que l'ordre chronologique soit respecté avec prepend)
+  log('OFFICIER COMMANDANT', `Je débarque ${toLand} équipage(s) (${toLand*3} hommes).`);
+  log('SPACE COMPUTER', `${state.menGround} homme(s) à terre.`);
+
+  // 2. Ensuite seulement, vérifier la récupération d'objet si l'équipage est bien au sol
+  if(isObjectPlanet && state.hasGroundCrew){
     state.mission = 'object';
     state.missionResult = {key: ch.tcode, points: 2};
     log('SPACE COMPUTER', `Objet (${TCODE_NAME[ch.tcode]}) récupéré par les équipes à terre. Prêt pour le réembarquement.`);
@@ -934,25 +940,15 @@ function disembark(){
 
   document.getElementById('btn-orbit').style.display = 'none';
   
-  const forme = ch.forme;
-  let fcModules = 0;
-  if(state.ship.mod_zip3 > 0) fcModules += state.ship.mod_zip3 * 5;
-  if(state.ship.mod_ho12 > 0) fcModules += state.ship.mod_ho12 * ({ANI:6, VEG:4, MIN:3}[forme] || 3);
-  if(state.ship.mod_sil4 > 0) fcModules += state.ship.mod_sil4 * ((forme==='MIN') ? 6 : 3);
-  
-  log('OFFICIER COMMANDANT', `Je débarque ${toLand} équipage(s) (${toLand*3} hommes).`);
-  log('SPACE COMPUTER', `${state.menGround} homme(s) à terre.`);
   addDebugLog(`Débarquement : ${state.menGround} hommes (${isObjectPlanet?'Objet à ramasser':(raceId||'aucun')}).`);
 }
 
 function checkGroundStatusAfterCombat(){
   document.getElementById('alien-count').innerText = state.currentAliens;
   document.getElementById('alien-wounded').innerText = state.alienWounded;
+  state.hasGroundCrew = state.menGround > 0;
   
-  const ch = ensureChain(state.currentPlanet);
-  const isObjectPlanet = (ch.tcode === 'OZ' || ch.tcode === 'SECOR');
-
-  if(state.menGround <= 0){
+  if(!state.hasGroundCrew){
     log('SPACE COMPUTER', '<b>Tous les équipages à terre ont été éliminés.</b> Réembarquement impossible.');
     document.getElementById('btn-reembark').style.display = 'none';
     document.getElementById('btn-combat').style.display = 'none';
@@ -1059,13 +1055,15 @@ function riposte(){
     state.menGround = Math.max(0, state.menGround - pertes);
     state.menLost += pertes;
     state.crewGround = Math.floor(state.menGround / 3);
+    state.hasGroundCrew = state.menGround > 0;
     log('SPACE COMPUTER', `L'Extrasolaire riposte : ${pertes} homme(s) perdu(s). Reste à terre : ${state.menGround} homme(s) (${state.crewGround} E. complets).`);
   }
 }
 
 function reembark(){
   if(state.shieldsOn) return alert('Boucliers activés : réembarquement impossible.');
-  if(state.menGround <= 0) return alert('Plus aucun homme à terre à réembarquer.');
+  state.hasGroundCrew = state.menGround > 0;
+  if(!state.hasGroundCrew) return alert('Plus aucun homme à terre à réembarquer.');
   
   log('OFFICIER COMMANDANT','J\'ordonne le réembarquement.');
   if(state.currentAliens > 0) riposte();
@@ -1093,6 +1091,7 @@ function reembark(){
   state.ship.crew += complete;
   state.menGround = 0;
   state.crewGround = 0;
+  state.hasGroundCrew = false;
   state.missionResult = null;
   
   document.getElementById('landing-crew').innerText = `${state.ship.crew} à bord · 0 à terre`;
@@ -1108,6 +1107,7 @@ function endMission(){
   state.currentPlanet = null;
   state.menGround = 0;
   state.crewGround = 0;
+  state.hasGroundCrew = false;
   state.isInFlight = true;
   log('SPACE COMPUTER', 'Décollage effectué. Vous êtes en vol.');
   addDebugLog('Décollage.');

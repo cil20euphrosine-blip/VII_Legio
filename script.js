@@ -1,7 +1,7 @@
 // ==========================================
 // CONSTANTES & REGISTRES (Version v1.3.5 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.3.5";
+const APP_VERSION = "v1.3.6";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -605,8 +605,7 @@ function checkPromotionAtBase(){
 function setLevel(v){
   if(state.turn>1){ alert("Le niveau est fixé au lancement de l'exploration."); document.getElementById('level-select').value=state.level; return; }
   state.level=v;
-  document.getElementById('pers-row').style.display = v==='AVANCE' ? 'flex' : 'none';
-  document.getElementById('savant-card').style.display = v==='AVANCE' ? 'block' : 'none';
+  syncScientistUI();
   startGame();
   addDebugLog(`Niveau choisi : ${v}`);
 }
@@ -2191,6 +2190,7 @@ function resetGame(){
   document.getElementById('display-shields').innerText='Boucliers : Activés';
   document.getElementById('display-shields').className='status-item active';
   document.getElementById('check-shields').checked=true;
+  syncScientistUI();
   document.getElementById('log-container').innerHTML='';
   document.getElementById('landing-content').style.display='none';
   document.getElementById('no-landing').style.display='block';
@@ -2401,3 +2401,123 @@ document.getElementById('dev-tools').style.display = DEBUG ? 'block' : 'none';
 document.getElementById('level-select').value=state.level;
 startGame();
 switchTab('vaisseau');
+
+
+// ==========================================
+// OFFICIER SAVANT : AFFICHAGE SYNCHRONISÉ (v1.3.6)
+// Le bloc n'est visible qu'en niveau AVANCÉ. Une seule fonction
+// gère l'affichage et la valeur du menu, appelée au lancement,
+// au changement de niveau, à la réinitialisation et à la restauration.
+// ==========================================
+function syncScientistUI(){
+  const avance = state.level === 'AVANCE';
+  const card = document.getElementById('savant-card');
+  const persRow = document.getElementById('pers-row');
+  if(card) card.style.display = avance ? 'block' : 'none';
+  if(persRow) persRow.style.display = avance ? 'flex' : 'none';
+  const sel = document.getElementById('savant-select');
+  if(sel) sel.value = String(state.savant || 0);
+}
+
+// ==========================================
+// SAUVEGARDE & RESTAURATION PARTIELLE (v1.3.6)
+// ==========================================
+const SAVE_SECTIONS = {
+  partie:   ['level','shipClass','turn','points','personality','savant','maxContainers','isScenario','scenarioStep'],
+  vaisseau: ['ship'],
+  position: ['basePos','position','shieldsOn','shieldsLocked','hullHitsThisTurn'],
+  planetes: ['planets','currentPlanet','computersUsedThisTurn','observablePlanets','risks','travelHistory'],
+  journal:  []   // traité à part : HTML du journal + log de debug
+};
+let sauvegardeChargee = null;
+
+function capturerSection(nom){
+  if(nom === 'journal'){
+    return { html: document.getElementById('log-container').innerHTML, debugLogs: state.debugLogs };
+  }
+  const out = {};
+  for(const cle of SAVE_SECTIONS[nom]) out[cle] = state[cle];
+  return out;
+}
+
+function appliquerSection(nom, data){
+  if(nom === 'journal'){
+    if(typeof data.html === 'string') document.getElementById('log-container').innerHTML = data.html;
+    if(Array.isArray(data.debugLogs)) state.debugLogs = data.debugLogs;
+    return;
+  }
+  for(const cle of SAVE_SECTIONS[nom]) if(cle in data) state[cle] = data[cle];
+}
+
+function sauvegarderPartie(){
+  const sections = {};
+  for(const nom of Object.keys(SAVE_SECTIONS)) sections[nom] = capturerSection(nom);
+  const fichier = { app: 'Decurio Notius', version: APP_VERSION, date: new Date().toISOString(), sections };
+  const blob = new Blob([JSON.stringify(fichier, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const lien = document.createElement('a');
+  lien.href = url;
+  lien.download = `decurio-notius-${Date.now()}.json`;
+  document.body.appendChild(lien);
+  lien.click();
+  lien.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  document.getElementById('message-sauvegarde').textContent = 'Sauvegarde exportée.';
+}
+
+function chargerFichierSauvegarde(){
+  const input = document.getElementById('fichier-restauration');
+  const msg = document.getElementById('message-sauvegarde');
+  const f = input.files[0];
+  if(!f) return;
+  const lecteur = new FileReader();
+  lecteur.onload = () => {
+    try{
+      const d = JSON.parse(lecteur.result);
+      if(!d.sections || typeof d.sections !== 'object') throw new Error('format non reconnu');
+      sauvegardeChargee = d;
+      document.getElementById('choix-restauration').style.display = 'block';
+      document.getElementById('btn-restaurer').style.display = 'inline-block';
+      msg.textContent = `Sauvegarde du ${d.date ? new Date(d.date).toLocaleString() : '?'} (${d.version || 'version ?'}) chargée. Cochez les sections à restaurer.`;
+    }catch(err){
+      sauvegardeChargee = null;
+      document.getElementById('choix-restauration').style.display = 'none';
+      document.getElementById('btn-restaurer').style.display = 'none';
+      msg.textContent = 'Fichier invalide : ' + err.message;
+    }
+  };
+  lecteur.readAsText(f);
+}
+
+function rafraichirApresRestauration(){
+  const $ = id => document.getElementById(id);
+  $('level-select').value = state.level;
+  $('pers-select').value = String(state.personality);
+  syncScientistUI();
+  $('display-points').innerText = state.points;
+  $('display-turn').innerText = 'Tour ' + state.turn;
+  $('display-level').innerText = 'Niveau ' + state.position.z;
+  $('display-shields').innerText = 'Boucliers : ' + (state.shieldsOn ? 'Activés' : 'Désactivés');
+  $('display-shields').className = 'status-item' + (state.shieldsOn ? ' active' : '');
+  $('check-shields').checked = state.shieldsOn;
+  renderShip();
+  updateRouteLimits();
+  renderPlanets();
+  if(typeof renderOpLog === 'function') renderOpLog();
+}
+
+function restaurerSectionsCochees(){
+  const msg = document.getElementById('message-sauvegarde');
+  if(!sauvegardeChargee){ msg.textContent = 'Aucune sauvegarde chargée.'; return; }
+  const cochees = [...document.querySelectorAll('#choix-restauration input:checked')]
+    .map(c => c.value)
+    .filter(nom => sauvegardeChargee.sections[nom] !== undefined);
+  if(cochees.length === 0){ msg.textContent = 'Aucune section cochée disponible.'; return; }
+  if(!confirm(`Restaurer : ${cochees.join(', ')} ? L'état actuel de ces sections sera remplacé.`)) return;
+  for(const nom of cochees) appliquerSection(nom, sauvegardeChargee.sections[nom]);
+  rafraichirApresRestauration();
+  addDebugLog('Restauration partielle : ' + cochees.join(', '));
+  msg.textContent = 'Restauré : ' + cochees.join(', ') + '.';
+}
+
+syncScientistUI();

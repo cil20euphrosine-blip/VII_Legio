@@ -29,7 +29,7 @@
 <header>
   <div class="header-top">
     <div>
-      <h1>Decurio NOTIUS <span id="app-version" style="font-size:0.75rem; background:var(--accent-light); color:var(--accent); padding:2px 6px; border-radius:4px; vertical-align:middle;">v1.3.5</span></h1>
+      <h1>Decurio NOTIUS <span id="app-version" style="font-size:0.75rem; background:var(--accent-light); color:var(--accent); padding:2px 6px; border-radius:4px; vertical-align:middle;">v1.3.6</span></h1>
       <div class="subtitle" id="ship-title">FROMBOLA « MARTHIA » · niveau 0</div>
     </div>
     <div>
@@ -334,6 +334,22 @@
     <h2>Vérification du système</h2>
     <div id="checks"></div>
     <button class="btn-primary" style="margin-top:10px;" onclick="renderControle()">Relancer les vérifications</button>
+  </div>
+  <div class="card">
+    <h2>Sauvegarde de la partie</h2>
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:10px;">Exporte l'état en fichier JSON. Restauration par sections : seules les sections cochées sont remplacées.</p>
+    <button class="btn-primary" onclick="sauvegarderPartie()">Sauvegarder la partie</button>
+    <hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">
+    <input type="file" id="fichier-restauration" accept="application/json,.json" onchange="chargerFichierSauvegarde()">
+    <div id="choix-restauration" style="display:none;margin-top:12px;">
+      <label class="radio-item"><input type="checkbox" value="partie" checked> <span><strong>Partie</strong> (niveau, tour, points, personnalité, savant)</span></label>
+      <label class="radio-item"><input type="checkbox" value="vaisseau" checked> <span><strong>Vaisseau</strong> (containers, équipements)</span></label>
+      <label class="radio-item"><input type="checkbox" value="position" checked> <span><strong>Position</strong> (base, vaisseau, boucliers)</span></label>
+      <label class="radio-item"><input type="checkbox" value="planetes" checked> <span><strong>Planètes</strong> (carte, planètes repérées, risques)</span></label>
+      <label class="radio-item"><input type="checkbox" value="journal" checked> <span><strong>Journal</strong> (journal de bord et log de debug)</span></label>
+    </div>
+    <button class="btn-primary" id="btn-restaurer" onclick="restaurerSectionsCochees()" style="display:none;margin-top:12px;background:var(--dark-teal);">Restaurer les sections cochées</button>
+    <p id="message-sauvegarde" role="status" style="font-size:.85rem;margin-top:10px;color:var(--accent);"></p>
   </div>
   <div class="card">
     <h2>Historique des opérations</h2>

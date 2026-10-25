@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Decurio NOTIUS v1.3.7 — LEGIO VII Solo</title>
-<link rel="stylesheet" href="styles.css?v=1.3.7">
+<title>Decurio NOTIUS v1.3.8 — LEGIO VII Solo</title>
+<link rel="stylesheet" href="styles.css?v=1.3.8">
 <style>
   /* Ajustement de la barre de navigation pour forcer l'affichage de tous les onglets */
   nav {
@@ -29,7 +29,7 @@
 <header>
   <div class="header-top">
     <div>
-      <h1>Decurio NOTIUS <span id="app-version" style="font-size:0.75rem; background:var(--accent-light); color:var(--accent); padding:2px 6px; border-radius:4px; vertical-align:middle;">v1.3.7</span></h1>
+      <h1>Decurio NOTIUS <span id="app-version" style="font-size:0.75rem; background:var(--accent-light); color:var(--accent); padding:2px 6px; border-radius:4px; vertical-align:middle;">v1.3.8</span></h1>
       <div class="subtitle" id="ship-title">FROMBOLA « MARTHIA » · niveau 0</div>
     </div>
     <div>
@@ -97,9 +97,13 @@
       </div>
       <select id="specialite-select" onchange="setSpecialite(this.value)" style="width:auto;">
         <option value="">non défini</option>
-        <option value="médecin">Médecin</option>
         <option value="géologue">Géologue</option>
+        <option value="biologiste">Biologiste</option>
+        <option value="botaniste">Botaniste</option>
         <option value="sociologue">Sociologue</option>
+        <option value="médecin">Médecin</option>
+        <option value="princeps robur">Princeps Robur (extra-solaire)</option>
+        <option value="princeps psi">Princeps Psi (extra-solaire)</option>
       </select>
     </div>
   </div>
@@ -415,6 +419,6 @@
   <button onclick="switchTab('controle')" id="nav-controle"><span class="icon">✔</span>Contrôle</button>
 </nav>
 
-<script src="script.js?v=1.3.7"></script>
+<script src="script.js?v=1.3.8"></script>
 </body>
 </html>

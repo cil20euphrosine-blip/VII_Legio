@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.3.7 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.8 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.3.7";
+const APP_VERSION = "v1.3.8";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -281,6 +281,7 @@ function groundLegionAtt(includeWeapons){
     if(state.ship.mod_ho12 > 0 && state.alienRace !== 'SPHAERAE') fc += state.ship.mod_ho12 * ({ANI:6, VEG:4, MIN:3}[forme] || 3);
     if(state.ship.mod_sil4 > 0) fc += state.ship.mod_sil4 * ((forme === 'MIN') ? 6 : 3);
   }
+  if(state.specialite === 'princeps robur' && state.menGround > 0) fc += 2;
   return fc;
 }
 
@@ -299,6 +300,7 @@ function groundLegionDef(){
   if(state.level === 'AVANCE'){
     fc += (state.personality || 0);
   }
+  if(state.specialite === 'princeps robur' && state.menGround > 0) fc += 2;
   return fc;
 }
 
@@ -734,18 +736,7 @@ function hitShip(n){
       if(key==='shields' && state.ship.shields<=0){ state.shieldsOn=false; log('SPACE COMPUTER','<b>Boucliers détruits</b> : aucun bouclier disponible (F.C. Dif. = coque, 2).'); } }
     else log('SPACE COMPUTER',`Dégât sur « ${el} » absent du vaisseau : ignoré.`);
   }
-  if(n > 0 && state.savant > 0){
-    const dSav = d6();
-    if(dSav % 2 === 1){
-      const malus = state.savant;
-      state.points -= malus;
-      state.savant = 0;
-      const sel = document.getElementById('savant-select');
-      if(sel) sel.value = "0";
-      document.getElementById('display-points').innerText = state.points;
-      log('SPACE COMPUTER', `<b>Décès de l'Officier Savant</b> lors de l'impact (dé ${dSav} impair) : −${malus} point(s).`);
-    }
-  }
+  if(n > 0 && state.specialite) verifierDecesOfficier();
   renderShip(); updateRouteLimits();
 }
 
@@ -1021,6 +1012,7 @@ function executeRoute(){
     if(routeInterrompue && collisionPlanet) log('SPACE COMPUTER',`<b>ARRÊT D'URGENCE.</b> Planète #${collisionPlanet.id} détectée sur la trajectoire : arrêt au parsec ${maxSteps}.`);
     if(riskHit && riskHit.kind==='rmg') log('SPACE COMPUTER','Réseau magnéto-gravitationnel : la route s\'arrête sans information (sauf Princeps PSI).');
     if(riskHit && riskHit.kind==='dn') log('SPACE COMPUTER','Distorsion nullius : la route s\'interrompt.');
+    if(riskHit) verifierPsiRisque();
     if(risksDamage>0) hitShip(risksDamage);
     
     document.getElementById('display-points').innerText=state.points;
@@ -1450,6 +1442,7 @@ function disembark(){
       const deserters = totDes - 7;
       state.menGround = Math.max(0, state.menGround - deserters);
       state.menLost += deserters;
+      verifierOfficiersPertes();
       state.crewGround = Math.floor(state.menGround / 3);
       state.hasGroundCrew = state.menGround > 0;
       document.getElementById('landing-crew').innerText=`${state.ship.crew} à bord · ${state.crewGround} E. (${state.menGround} hommes) à terre`;
@@ -1768,6 +1761,7 @@ function startIntim(){
 
 // Tableaux H (Base) et I (Avancé) : Commerce (limité à 2 tours consécutifs)
 function startComm(){
+  if(state.specialite === 'princeps robur') return alert('Le Princeps Robur interdit tout commerce.');
   if(state.menGround<=0||state.commTurns>=2) return;
   const rid=currentRace(), r0=rid?RACES[rid]:null;
   if(!r0 || !r0.missions.includes('COMMERCE')) return alert('Commerce non autorisé pour cette race.');
@@ -1848,6 +1842,7 @@ function startDuel(){
   } else {
     state.menGround = Math.max(0, state.menGround - 1);
     state.menLost += 1;
+    verifierOfficiersPertes();
     state.crewGround = Math.floor(state.menGround / 3);
     state.missionResult = {key:'duel', points:0};
     logCombat(`<b>Duel d'honneur · dé ${r}</b> : Défaite. 1 légionnaire est tombé au combat.`);
@@ -1857,6 +1852,7 @@ function startDuel(){
 
 // Tableau E officiel : Négociation d'Alliance
 function startAlliance(){
+  if(state.specialite === 'princeps robur') return alert('Le Princeps Robur interdit toute alliance.');
   if(state.menGround<=0||state.missionUsed||state.allianceFails>=2) return;
   const rid=currentRace(), r0=rid?RACES[rid]:null;
   if(!r0 || !r0.missions.includes('ALLIANCE')) return alert('Alliance non autorisée pour cette race.');
@@ -1889,6 +1885,7 @@ function startAlliance(){
   } else if(res === 'N'){
     state.missionUsed = true;
     state.allianceFails++;
+    if(state.specialite === 'sociologue') perdreOfficier('Sociologue', state.savant, "rupture de l'alliance");
     if(ch) ch.nature = 'AGRESSIVE';
     logCombat(`<b>Tableau E · dé ${rawDie}${persMod?` (− pers. ${persMod} = ${modDie})`:''} · F.All ${fAll} : NON (▲) !</b><br>Rupture diplomatique ! Les ${rid.replace(/_/g,' ')} attaquent immédiatement sans riposte possible ce tour.`);
     riposte();
@@ -1970,6 +1967,7 @@ function riposte(){
   if(pertes > 0){
     state.menGround = Math.max(0, state.menGround - pertes);
     state.menLost += pertes;
+    verifierOfficiersPertes();
     state.crewGround = Math.floor(state.menGround / 3);
     state.hasGroundCrew = state.menGround > 0;
     document.getElementById('landing-crew').innerText=`${state.ship.crew} à bord · ${state.crewGround} E. (${state.menGround} hommes) à terre`;
@@ -2409,6 +2407,55 @@ switchTab('vaisseau');
 // gère l'affichage et la valeur du menu, appelée au lancement,
 // au changement de niveau, à la réinitialisation et à la restauration.
 // ==========================================
+const SPECIALITES = {
+  'géologue':      {label:'Géologue',        valeur:true},
+  'biologiste':    {label:'Biologiste',      valeur:true},
+  'botaniste':     {label:'Botaniste',       valeur:true},
+  'sociologue':    {label:'Sociologue',      valeur:true},
+  'médecin':       {label:'Médecin',         valeur:false},
+  'princeps robur':{label:'Princeps Robur',  valeur:false},
+  'princeps psi':  {label:'Princeps Psi',    valeur:false}
+};
+
+function specialiteValeur(){
+  return !!(state.specialite && SPECIALITES[state.specialite] && SPECIALITES[state.specialite].valeur);
+}
+
+// Retire l'officier (mort ou perte) et applique le malus de points
+function perdreOfficier(label, pts, detail){
+  if(pts > 0){
+    state.points -= pts;
+    document.getElementById('display-points').innerText = state.points;
+  }
+  log('SPACE COMPUTER', `<b>Décès : ${label}</b> (${detail}) : −${pts} point(s).`);
+  state.specialite = ''; state.savant = 0;
+  syncScientistUI();
+}
+
+// Appelé à chaque dégât du vaisseau (une fois par impact)
+function verifierDecesOfficier(){
+  const s = state.specialite, d = d6();
+  if(s === 'médecin'){
+    if(d <= 2) perdreOfficier('Médecin', 3, `dé ${d} : 1 ou 2`);
+    return;
+  }
+  if(specialiteValeur() && d % 2 === 1) perdreOfficier(SPECIALITES[s].label, state.savant, `dé ${d} impair`);
+}
+
+// Princeps Robur : perdu avec le premier équipage éliminé (3 hommes)
+function verifierOfficiersPertes(){
+  if(state.specialite === 'princeps robur' && state.menLost >= 3)
+    perdreOfficier('Princeps Robur', 5, 'premier équipage éliminé');
+}
+
+// Princeps Psi : mort possible à chaque risque signalé
+function verifierPsiRisque(){
+  if(state.specialite !== 'princeps psi') return;
+  const d = d6();
+  if(d % 2 === 1) perdreOfficier('Princeps Psi', 3, `risque signalé, dé ${d} impair`);
+  else log('SPACE COMPUTER', `Princeps PSI : risque signalé sans conséquence (dé ${d} pair).`);
+}
+
 function syncScientistUI(){
   const avance = state.level === 'AVANCE';
   const card = document.getElementById('savant-card');
@@ -2419,12 +2466,20 @@ function syncScientistUI(){
   if(sel) sel.value = String(state.savant || 0);
   const spec = document.getElementById('specialite-select');
   if(spec) spec.value = state.specialite || '';
+  const savSel = document.getElementById('savant-select');
+  if(savSel){
+    const val = specialiteValeur();
+    savSel.disabled = !val;
+    if(!val) savSel.value = '0';
+  }
 }
 
 function setSpecialite(v){
-  if(state.isInFlight){ alert("En vol, la spécialité de l'officier ne peut pas être changée."); document.getElementById('specialite-select').value=state.specialite||''; return; }
-  state.specialite = v || '';
-  addDebugLog('Spécialité de l\'officier : ' + (state.specialite || 'non définie'));
+  if(state.isInFlight){ alert("En vol, la spécialité de l'officier ne peut pas être changée."); document.getElementById('specialite-select').value = state.specialite || ''; return; }
+  state.specialite = (v && SPECIALITES[v]) ? v : '';
+  if(!specialiteValeur()) state.savant = 0;
+  syncScientistUI();
+  addDebugLog('Spécialité de l\'officier : ' + (state.specialite ? SPECIALITES[state.specialite].label : 'non définie'));
 }
 
 // ==========================================

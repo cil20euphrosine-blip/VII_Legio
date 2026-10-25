@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.3.14 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.15 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.3.14";
+const APP_VERSION = "v1.3.15";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -262,7 +262,7 @@ function alienFC(){
 
 // Calcul du F.C. Attaque et Défense des équipages à terre (avec Radioactivité α/β, Modules et Personnalité)
 // ==========================================
-// ÉQUIPAGES À TERRE : HOMMES VALIDES ET HORS D'ÉTAT (v1.3.14)
+// ÉQUIPAGES À TERRE : HOMMES VALIDES ET HORS D'ÉTAT (v1.3.15)
 // Chaque équipage a v hommes valides et k hommes hors d'état.
 // Un homme perdu est hors d'état (il ne revient pas en points).
 // Un équipage sans homme valide est définitivement perdu.

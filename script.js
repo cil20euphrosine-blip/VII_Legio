@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.3.12 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.14 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.3.12";
+const APP_VERSION = "v1.3.14";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -262,7 +262,7 @@ function alienFC(){
 
 // Calcul du F.C. Attaque et Défense des équipages à terre (avec Radioactivité α/β, Modules et Personnalité)
 // ==========================================
-// ÉQUIPAGES À TERRE : HOMMES VALIDES ET HORS D'ÉTAT (v1.3.12)
+// ÉQUIPAGES À TERRE : HOMMES VALIDES ET HORS D'ÉTAT (v1.3.14)
 // Chaque équipage a v hommes valides et k hommes hors d'état.
 // Un homme perdu est hors d'état (il ne revient pas en points).
 // Un équipage sans homme valide est définitivement perdu.
@@ -2641,3 +2641,8 @@ function restaurerSectionsCochees(){
 }
 
 syncScientistUI();
+
+// Version affichée à plusieurs endroits, toujours issue de APP_VERSION
+document.title = `Decurio NOTIUS ${APP_VERSION} — LEGIO VII Solo`;
+const versionControle = document.getElementById('version-controle');
+if(versionControle) versionControle.textContent = `Version de l'application : ${APP_VERSION}`;

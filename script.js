@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.3.6 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.7 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.3.6";
+const APP_VERSION = "v1.3.7";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -214,7 +214,7 @@ let state = {
   route:{segments:[],parsecsInput:1,radarsActive:2},
   planets:[], currentPlanet:null, computersUsedThisTurn:0, observablePlanets:[],
   shieldsOn:true, shieldsLocked:false, hullHitsThisTurn:0,
-  personality:0, risks:null, savant:0,
+  personality:0, risks:null, savant:0, specialite:'',
   menGround:0, crewGround:0, hasGroundCrew:false, landedTurns:0, menLost:0, mission:null, missionResult:null,
   currentAliens:0, alienWounded:0, missionUsed:false, allianceFails:0, commTurns:0, landingBehavior:null, landingZone:null,
   debugLogs:[], travelHistory:[]
@@ -2182,7 +2182,7 @@ function resetGame(){
   state.turn=1; state.points=0; state.isInFlight=false; state.isScenario=false; state.scenarioStep=0;
   state.shipClass='FROMBOLA'; state.maxContainers=SHIPS.FROMBOLA.cont;
   state.ship={crew:1,shields:1,lasers:1,radars:2,computers:1,tanks:3,modules:0,mod_zip3:0,mod_ho12:0,mod_sil4:0};
-  state.shieldsOn=true; state.shieldsLocked=false; state.hullHitsThisTurn=0; state.savant=0;
+  state.shieldsOn=true; state.shieldsLocked=false; state.hullHitsThisTurn=0; state.savant=0; state.specialite='';
   state.debugLogs=[];
   document.getElementById('scenario-banner').style.display='none';
   document.getElementById('display-points').innerText='0';
@@ -2417,13 +2417,21 @@ function syncScientistUI(){
   if(persRow) persRow.style.display = avance ? 'flex' : 'none';
   const sel = document.getElementById('savant-select');
   if(sel) sel.value = String(state.savant || 0);
+  const spec = document.getElementById('specialite-select');
+  if(spec) spec.value = state.specialite || '';
+}
+
+function setSpecialite(v){
+  if(state.isInFlight){ alert("En vol, la spécialité de l'officier ne peut pas être changée."); document.getElementById('specialite-select').value=state.specialite||''; return; }
+  state.specialite = v || '';
+  addDebugLog('Spécialité de l\'officier : ' + (state.specialite || 'non définie'));
 }
 
 // ==========================================
 // SAUVEGARDE & RESTAURATION PARTIELLE (v1.3.6)
 // ==========================================
 const SAVE_SECTIONS = {
-  partie:   ['level','shipClass','turn','points','personality','savant','maxContainers','isScenario','scenarioStep'],
+  partie:   ['level','shipClass','turn','points','personality','savant','specialite','maxContainers','isScenario','scenarioStep'],
   vaisseau: ['ship'],
   position: ['basePos','position','shieldsOn','shieldsLocked','hullHitsThisTurn'],
   planetes: ['planets','currentPlanet','computersUsedThisTurn','observablePlanets','risks','travelHistory'],

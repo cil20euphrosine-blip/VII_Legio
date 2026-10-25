@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.3.8 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.9 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.3.8";
+const APP_VERSION = "v1.3.9";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -951,11 +951,18 @@ function executeRoute(){
   state.computersUsedThisTurn=0; state.observablePlanets=[];
   const planetSightings = {};
   let stepCount=0;
+  let baseSighting=null;
 
   for(let i=0;i<maxSteps;i++){
     const np=path[i]; if(np.isJump){ stepCount+=4; continue; } stepCount++;
     state.planets.forEach(p=>{
-      if(p.id===0||p.z!==np.z) return;
+      if(p.id===0){
+        if(p.z!==np.z) return;
+        const dxb=p.x-np.x, dyb=p.y-np.y, distb=Math.max(Math.abs(dxb),Math.abs(dyb));
+        if(distb<=radar && (!baseSighting || distb<baseSighting.dist)) baseSighting={step:stepCount,dist:distb,dir:formatDirection(dxb,dyb)};
+        return;
+      }
+      if(p.z!==np.z) return;
       const dx=p.x-np.x, dy=p.y-np.y, dist=Math.max(Math.abs(dx), Math.abs(dy));
       if(dist<=radar){
         if(!state.observablePlanets.includes(p.id)) state.observablePlanets.push(p.id);
@@ -980,6 +987,12 @@ function executeRoute(){
     });
   }
 
+  if(baseSighting){
+    const b = baseSighting;
+    log('SPACE COMPUTER', b.dist===0
+      ? `Au <b>${b.step}e parsec</b>, la <b>Base</b> se trouve sur votre trajectoire.`
+      : `Au <b>${b.step}e parsec</b>, la <b>Base</b> est signalée à proximité (distance ${b.dist} parsec${b.dist>1?'s':''}, direction ${b.dir}).`);
+  }
   Object.keys(planetSightings).forEach(pid => {
     const info = planetSightings[pid];
     log('SPACE COMPUTER', `Au <b>${info.step}e parsec</b>, repérage au plus près de la <b>Planète #${pid}</b> ${info.isNew ? '(inconnue)' : '(déjà connue)'}. Distance minimale : <b>${info.dist} parsec(s)</b>. Direction : <b>${info.dir}</b>.`);

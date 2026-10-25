@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.3.9 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.12 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.3.9";
+const APP_VERSION = "v1.3.12";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -214,8 +214,8 @@ let state = {
   route:{segments:[],parsecsInput:1,radarsActive:2},
   planets:[], currentPlanet:null, computersUsedThisTurn:0, observablePlanets:[],
   shieldsOn:true, shieldsLocked:false, hullHitsThisTurn:0,
-  personality:0, risks:null, savant:0, specialite:'',
-  menGround:0, crewGround:0, hasGroundCrew:false, landedTurns:0, menLost:0, mission:null, missionResult:null,
+  personality:0, risks:null, savant:0, specialite:'', pendingDN:null,
+  groundCrews:[], menGround:0, crewGround:0, hasGroundCrew:false, landedTurns:0, menLost:0, mission:null, missionResult:null,
   currentAliens:0, alienWounded:0, missionUsed:false, allianceFails:0, commTurns:0, landingBehavior:null, landingZone:null,
   debugLogs:[], travelHistory:[]
 };
@@ -261,6 +261,48 @@ function alienFC(){
 }
 
 // Calcul du F.C. Attaque et Défense des équipages à terre (avec Radioactivité α/β, Modules et Personnalité)
+// ==========================================
+// ÉQUIPAGES À TERRE : HOMMES VALIDES ET HORS D'ÉTAT (v1.3.12)
+// Chaque équipage a v hommes valides et k hommes hors d'état.
+// Un homme perdu est hors d'état (il ne revient pas en points).
+// Un équipage sans homme valide est définitivement perdu.
+// Les pertes sont décomptées sur un équipage jusqu'à zéro homme valide, puis sur le suivant.
+// ==========================================
+function syncGround(){
+  state.groundCrews = (state.groundCrews || []).filter(c => c.v > 0);
+  state.menGround = state.groundCrews.reduce((a,c) => a + c.v, 0);
+  state.crewGround = state.groundCrews.length;
+  state.hasGroundCrew = state.menGround > 0;
+}
+function ajouterEquipage(){
+  state.groundCrews = state.groundCrews || [];
+  state.groundCrews.push({v:3, k:0});
+  syncGround();
+}
+function hommesHorsEtat(n){
+  for(const c of (state.groundCrews || [])){
+    while(n > 0 && c.v > 0){ c.v--; c.k++; n--; }
+    if(n <= 0) break;
+  }
+  syncGround();
+}
+function retirerHommesValides(n){
+  for(let i = 0; i < (state.groundCrews || []).length && n > 0; i++){
+    const c = state.groundCrews[i];
+    while(n > 0 && c.v > 0){ c.v--; n--; }
+  }
+  syncGround();
+}
+// Le médecin (vivant) remet en état un équipage entier par tour de vol
+function medecinRestaure(){
+  if(state.specialite !== 'médecin' || !state.groundCrews) return;
+  const c = state.groundCrews.find(c => c.k > 0 && c.v >= 1);
+  if(!c) return;
+  c.v = 3; c.k = 0;
+  syncGround();
+  log('SPACE COMPUTER', 'Le Médecin remet en état un équipage complet (3 hommes).');
+}
+
 function groundLegionAtt(includeWeapons){
   if(state.menGround <= 0) return 0;
   let fc = state.menGround;
@@ -795,7 +837,7 @@ function shipDestroyed(){
   state.shipClass=nc; state.maxContainers=SHIPS[nc].cont; state.points=0;
   state.ship={crew:SHIPS[nc].eqMin,shields:1,lasers:1,radars:2,computers:1,tanks:3,modules:0,mod_zip3:0,mod_ho12:0,mod_sil4:0};
   state.position={...state.basePos}; state.isInFlight=false; state.shieldsLocked=false; state.shieldsOn=true;
-  state.menGround=0; state.crewGround=0; state.hasGroundCrew=false; state.menLost=0; state.mission=null; state.missionResult=null; state.currentPlanet=null;
+  state.groundCrews=[]; state.menGround=0; state.crewGround=0; state.hasGroundCrew=false; state.menLost=0; state.mission=null; state.missionResult=null; state.currentPlanet=null;
   document.getElementById('display-points').innerText=0;
   document.getElementById('display-status').innerText='À la Base';
   document.getElementById('landing-content').style.display='none';
@@ -902,6 +944,16 @@ function executeRoute(){
   const routeStr=state.route.segments.map(s=>`${s.dir==='HAUT'||s.dir==='BAS'?'▲/▼ ':''}${s.parsecs} ${s.dir}`).join(' + ');
   log('OFFICIER COMMANDANT',`Tour ${state.turn} — Ma route : ${routeStr}. ${radar} radar(s). ${isLanding?"(route d'atterrissage)":''}`);
   addDebugLog(`>>> ROUTE : ${routeStr} (radars ${radar}, atterrissage ${isLanding})`);
+  if(state.pendingDN){
+    const pd = state.pendingDN; state.pendingDN = null;
+    state.position = {x:pd.x,y:pd.y,z:pd.z};
+    document.getElementById('display-level').innerText=`Niveau ${state.position.z}`;
+    const plDN = state.planets.find(q=>q.id!==0 && q.x===pd.x && q.y===pd.y && q.z===pd.z);
+    if(plDN){
+      log('SPACE COMPUTER', `La Distorsion Nullius vous a déposé sur la Planète #${plDN.id} : atterrissage obligatoire.`);
+      resetRoute(); prepareLanding(plDN); return;
+    }
+  }
 
   let cur={...state.position}; const path=[]; let boundaryStop=false;
   for(const seg of state.route.segments){
@@ -1001,16 +1053,11 @@ function executeRoute(){
   let finalPos = maxSteps>0 ? {...path[maxSteps-1]} : {...state.position};
   if(maxSteps>0 && finalPos.isJump) finalPos={x:finalPos.x,y:finalPos.y,z:finalPos.z};
   if(riskHit && riskHit.kind==='dn'){
+    // Le nouveau point de départ est calculé en secret par le S.C. et appliqué au tour suivant (Règlement S.C., C) Distorsions Nullius)
     const relo=distortionRelocate(finalPos);
-    finalPos={x:relo.x,y:relo.y,z:relo.z};
-    log('SPACE COMPUTER','Distorsion nullius : votre vaisseau est transporté vers un autre point de sa route.');
-    // Si la Distorsion porte exactement sur une planète, atterrissage obligatoire
-    const dnPlanet = state.planets.find(q=>q.id!==0 && q.x===finalPos.x && q.y===finalPos.y && q.z===finalPos.z);
-    if(dnPlanet){
-      state.position={x:finalPos.x,y:finalPos.y,z:finalPos.z};
-      log('SPACE COMPUTER', `La Distorsion Nullius projette votre vaisseau directement sur la Planète #${dnPlanet.id} : atterrissage obligatoire !`);
-      resetRoute(); prepareLanding(dnPlanet); return;
-    }
+    state.pendingDN={x:relo.x,y:relo.y,z:relo.z};
+    if(state.specialite==='princeps psi')
+      log('SPACE COMPUTER', `Princeps PSI : la distorsion nullius transportera votre vaisseau au parsec X${relo.x} Y${relo.y} N${relo.z} au tour suivant.`);
   }
   state.position={x:finalPos.x,y:finalPos.y,z:finalPos.z};
   document.getElementById('display-level').innerText=`Niveau ${state.position.z}`;
@@ -1023,7 +1070,7 @@ function executeRoute(){
       resetRoute(); prepareLanding(collisionPlanet); return;
     }
     if(routeInterrompue && collisionPlanet) log('SPACE COMPUTER',`<b>ARRÊT D'URGENCE.</b> Planète #${collisionPlanet.id} détectée sur la trajectoire : arrêt au parsec ${maxSteps}.`);
-    if(riskHit && riskHit.kind==='rmg') log('SPACE COMPUTER','Réseau magnéto-gravitationnel : la route s\'arrête sans information (sauf Princeps PSI).');
+    if(riskHit && riskHit.kind==='rmg' && state.specialite==='princeps psi') log('SPACE COMPUTER','Princeps PSI : réseau magnéto-gravitationnel détecté. La route s\'arrête sur ce parsec et repartira au tour suivant.');
     if(riskHit && riskHit.kind==='dn') log('SPACE COMPUTER','Distorsion nullius : la route s\'interrompt.');
     if(riskHit) verifierPsiRisque();
     if(risksDamage>0) hitShip(risksDamage);
@@ -1083,6 +1130,7 @@ function passTurn(){
 }
 
 function finishTurn(){
+  medecinRestaure();
   state.isInFlight = state.isInFlight && (state.position.x!==state.basePos.x || state.position.y!==state.basePos.y || state.position.z!==state.basePos.z);
   state.shieldsLocked=false;
   state.computersUsedThisTurn=0;
@@ -1282,7 +1330,7 @@ function switchToGroundMode(){
 
 function prepareLanding(planet){
   if(planet.done){ alert('Cette planète est déjà connue : elle ne rapporte plus de points.'); return; }
-  state.reembarked=false; state.currentPlanet=planet; state.crewGround=0; state.menGround=0; state.hasGroundCrew=false; state.landedTurns=0; state.menLost=0; state.missionResult=null; state.mission=null; state.missionUsed=false; state.allianceFails=0; state.commTurns=0; state.encounterRolled=false; state.landingBehavior=null; state.landingZone=null;
+  state.reembarked=false; state.currentPlanet=planet; state.crewGround=0; state.groundCrews=[]; state.menGround=0; state.hasGroundCrew=false; state.landedTurns=0; state.menLost=0; state.missionResult=null; state.mission=null; state.missionUsed=false; state.allianceFails=0; state.commTurns=0; state.encounterRolled=false; state.landingBehavior=null; state.landingZone=null;
   disembarkCount = Math.min(1, state.ship.crew);
   updateDisembarkUI();
   state.isInFlight = false;
@@ -1423,9 +1471,7 @@ function disembark(){
   const toLand = Math.min(disembarkCount, state.ship.crew);
   
   state.ship.crew -= toLand;
-  state.crewGround += toLand;
-  state.menGround += toLand * 3;
-  state.hasGroundCrew = state.menGround > 0;
+  for(let i = 0; i < toLand; i++) ajouterEquipage();
   state.landedTurns = 1;
   
   state.isInFlight = false;
@@ -1453,10 +1499,9 @@ function disembark(){
     recordOp('Désertion', 'Contrôle de désertion', {dé:dDes, personnalité:state.personality||0}, totDes>7?(totDes-7)+' déserteur(s)':'aucun', '');
     if(totDes > 7){
       const deserters = totDes - 7;
-      state.menGround = Math.max(0, state.menGround - deserters);
+      retirerHommesValides(deserters);
       state.menLost += deserters;
       verifierOfficiersPertes();
-      state.crewGround = Math.floor(state.menGround / 3);
       state.hasGroundCrew = state.menGround > 0;
       document.getElementById('landing-crew').innerText=`${state.ship.crew} à bord · ${state.crewGround} E. (${state.menGround} hommes) à terre`;
       log('SPACE COMPUTER', `<b>Désertion !</b> (dé ${dDes} + pers. ${state.personality} = ${totDes}) : ${deserters} homme(s) désertent chez les ${raceId.replace(/_/g,' ')} ! Reste ${state.menGround} homme(s).`);
@@ -1853,10 +1898,9 @@ function startDuel(){
     state.missionResult = {key:'duel', points:pts};
     logCombat(`<b>Duel d'honneur · dé ${r}</b> : Victoire du champion de la Légion ! Gain de <b>+${pts} points</b>.`);
   } else {
-    state.menGround = Math.max(0, state.menGround - 1);
+    hommesHorsEtat(1);
     state.menLost += 1;
     verifierOfficiersPertes();
-    state.crewGround = Math.floor(state.menGround / 3);
     state.missionResult = {key:'duel', points:0};
     logCombat(`<b>Duel d'honneur · dé ${r}</b> : Défaite. 1 légionnaire est tombé au combat.`);
   }
@@ -1978,10 +2022,9 @@ function riposte(){
   logCombat(`<b>Riposte (tableau B) · dé ${r} · diff ${diff>=0?'+':''}${diff}</b><br>Pertes : ${pertes} homme(s).`);
   
   if(pertes > 0){
-    state.menGround = Math.max(0, state.menGround - pertes);
+    hommesHorsEtat(pertes);
     state.menLost += pertes;
     verifierOfficiersPertes();
-    state.crewGround = Math.floor(state.menGround / 3);
     state.hasGroundCrew = state.menGround > 0;
     document.getElementById('landing-crew').innerText=`${state.ship.crew} à bord · ${state.crewGround} E. (${state.menGround} hommes) à terre`;
     log('SPACE COMPUTER', `L'Extrasolaire riposte : ${pertes} homme(s) perdu(s). Reste à terre : ${state.menGround} homme(s) (${state.crewGround} E. complets).`);
@@ -2010,7 +2053,8 @@ function reembark(){
   }
   
   const c = cls();
-  const complete = Math.floor(state.menGround / 3);
+  const complete = state.groundCrews.filter(c => c.v === 3).length;
+  const reembarques = state.groundCrews.length;
   const valid = state.landedTurns >= 1 && complete >= 1;
   
   if(valid && state.missionResult){
@@ -2029,8 +2073,8 @@ function reembark(){
     log('SPACE COMPUTER', `Pertes subies : −${state.menLost} point(s) (niveau ${c.level}).`);
   }
   
-  state.ship.crew += complete;
-  state.menGround = 0;
+  state.ship.crew += reembarques;
+  state.groundCrews=[]; state.menGround = 0;
   state.crewGround = 0;
   state.hasGroundCrew = false;
   state.missionResult = null;
@@ -2049,7 +2093,7 @@ function endMission(){
   document.getElementById('landing-content').style.display = 'none';
   document.getElementById('no-landing').style.display = 'block';
   state.currentPlanet = null;
-  state.menGround = 0;
+  state.groundCrews=[]; state.menGround = 0;
   state.crewGround = 0;
   state.hasGroundCrew = false;
   state.isInFlight = true;
@@ -2193,7 +2237,7 @@ function resetGame(){
   state.turn=1; state.points=0; state.isInFlight=false; state.isScenario=false; state.scenarioStep=0;
   state.shipClass='FROMBOLA'; state.maxContainers=SHIPS.FROMBOLA.cont;
   state.ship={crew:1,shields:1,lasers:1,radars:2,computers:1,tanks:3,modules:0,mod_zip3:0,mod_ho12:0,mod_sil4:0};
-  state.shieldsOn=true; state.shieldsLocked=false; state.hullHitsThisTurn=0; state.savant=0; state.specialite='';
+  state.shieldsOn=true; state.shieldsLocked=false; state.hullHitsThisTurn=0; state.savant=0; state.specialite=''; state.pendingDN=null;
   state.debugLogs=[];
   document.getElementById('scenario-banner').style.display='none';
   document.getElementById('display-points').innerText='0';
@@ -2501,8 +2545,8 @@ function setSpecialite(v){
 const SAVE_SECTIONS = {
   partie:   ['level','shipClass','turn','points','personality','savant','specialite','maxContainers','isScenario','scenarioStep'],
   vaisseau: ['ship'],
-  position: ['basePos','position','shieldsOn','shieldsLocked','hullHitsThisTurn'],
-  planetes: ['planets','currentPlanet','computersUsedThisTurn','observablePlanets','risks','travelHistory'],
+  position: ['basePos','position','shieldsOn','shieldsLocked','hullHitsThisTurn','pendingDN'],
+  planetes: ['planets','currentPlanet','computersUsedThisTurn','observablePlanets','risks','travelHistory','groundCrews','menGround','crewGround','hasGroundCrew','menLost'],
   journal:  []   // traité à part : HTML du journal + log de debug
 };
 let sauvegardeChargee = null;

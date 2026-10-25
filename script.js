@@ -1,5 +1,5 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.3.5 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.6 - Règlements UC & SC Intégraux)
 // ==========================================
 const APP_VERSION = "v1.3.6";
 const DEBUG = false;

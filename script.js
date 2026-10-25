@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.3.2 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.5 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.3.2";
+const APP_VERSION = "v1.3.5";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -396,6 +396,7 @@ function logCombat(text){ const cl=document.getElementById('combat-log'); cl.sty
 // FORMATEUR DE DIRECTION DIAGONALE PRÉCIS
 // ==========================================
 function formatDirection(dx, dy) {
+  if (dx === 0 && dy === 0) return 'sur place';
   let parts = [];
   if (dy > 0) parts.push(`${Math.abs(dy)} Nord`);
   if (dy < 0) parts.push(`${Math.abs(dy)} Sud`);
@@ -681,7 +682,12 @@ function renderShip(){
   
   const al=document.getElementById('ship-alert'), st=document.getElementById('display-status');
   
-  if(state.currentPlanet){
+  if(state.currentPlanet && state.reembarked){
+    al.innerHTML='<strong>Statut : Prêt au décollage.</strong> Équipages à bord.';
+    al.style.background='var(--accent-light)';
+    st.innerText='Prêt au décollage';
+    st.className='status-item active';
+  } else if(state.currentPlanet){
     al.innerHTML='<strong>Statut : Sur planète.</strong> Atterrissage effectué.';
     al.style.background='var(--accent-light)';
     st.innerText='Atterri';
@@ -705,6 +711,7 @@ function renderShip(){
 }
 
 function setShields(on){
+  if(on && state.ship.shields<=0){ alert('Plus aucun bouclier à bord.'); document.getElementById('check-shields').checked=false; return; }
   if(state.shieldsLocked){ alert('Les boucliers sont fixés pour ce tour.'); document.getElementById('check-shields').checked=state.shieldsOn; return; }
   state.shieldsOn=on;
   document.getElementById('display-shields').innerText=`Boucliers : ${on?'Activés':'Désactivés'}`;
@@ -724,7 +731,8 @@ function hitShip(n){
       continue;
     }
     const key={bou:'shields',las:'lasers',rad:'radars',com:'computers',res:'tanks'}[el];
-    if(state.ship[key]>0){ state.ship[key]--; log('SPACE COMPUTER',`Dégât : un élément « ${el} » est détruit.`); }
+    if(state.ship[key]>0){ state.ship[key]--; log('SPACE COMPUTER',`Dégât : un élément « ${el} » est détruit.`);
+      if(key==='shields' && state.ship.shields<=0){ state.shieldsOn=false; log('SPACE COMPUTER','<b>Boucliers détruits</b> : aucun bouclier disponible (F.C. Dif. = coque, 2).'); } }
     else log('SPACE COMPUTER',`Dégât sur « ${el} » absent du vaisseau : ignoré.`);
   }
   if(n > 0 && state.savant > 0){
@@ -742,11 +750,57 @@ function hitShip(n){
   renderShip(); updateRouteLimits();
 }
 
+function showShipDestroyedFx(prev, next){
+  if(!document.getElementById('destroy-fx-style')){
+    const st=document.createElement('style'); st.id='destroy-fx-style';
+    st.textContent=`
+#destroy-fx{position:fixed;inset:0;z-index:9999;background:radial-gradient(circle,rgba(255,90,20,.55) 0%,rgba(0,0,0,.94) 62%);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;animation:dfxFade .4s ease-out}
+#destroy-fx .dfx-flash{position:absolute;inset:0;background:#fff;animation:dfxFlash .5s ease-out forwards;pointer-events:none}
+#destroy-fx .dfx-shard{position:absolute;left:50%;top:50%;height:4px;background:#ffb020;box-shadow:0 0 10px #ff5a00;opacity:0;animation:dfxShard 1.6s ease-out forwards;pointer-events:none}
+#destroy-fx h1{color:#ffcf5a;text-shadow:0 0 18px #ff4d00,0 0 40px #ff2a00;letter-spacing:.08em;margin:0 16px;text-align:center;font-size:clamp(28px,9vw,56px);animation:dfxTitle 1.2s cubic-bezier(.2,1.6,.4,1) both}
+#destroy-fx p{color:#f5e6c8;font-size:15px;max-width:80vw;text-align:center;margin:18px 0 0;opacity:0;animation:dfxFade 1s .9s forwards}
+#destroy-fx .dfx-hint{position:absolute;bottom:24px;font-size:12px;color:#9a8a6a;opacity:0;animation:dfxFade 1s 2s forwards}
+body.dfx-shake{animation:dfxShake .6s linear}
+@keyframes dfxFade{from{opacity:0}to{opacity:1}}
+@keyframes dfxFlash{0%{opacity:1}100%{opacity:0}}
+@keyframes dfxTitle{0%{transform:scale(3);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes dfxShard{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--r))}}
+@keyframes dfxShake{0%,100%{transform:translate(0,0)}10%{transform:translate(-8px,4px)}20%{transform:translate(8px,-6px)}30%{transform:translate(-10px,2px)}40%{transform:translate(10px,-4px)}50%{transform:translate(-6px,6px)}60%{transform:translate(6px,-2px)}70%{transform:translate(-4px,3px)}80%{transform:translate(3px,-3px)}90%{transform:translate(-2px,1px)}}`;
+    document.head.appendChild(st);
+  }
+  document.body.classList.add('dfx-shake');
+  setTimeout(()=>document.body.classList.remove('dfx-shake'),700);
+
+  const ov=document.createElement('div'); ov.id='destroy-fx';
+  ov.innerHTML='<div class="dfx-flash"></div>';
+  for(let i=0;i<22;i++){
+    const sh=document.createElement('span'); sh.className='dfx-shard';
+    const a=Math.random()*Math.PI*2, dist=120+Math.random()*280;
+    sh.style.setProperty('--dx',(Math.cos(a)*dist)+'px');
+    sh.style.setProperty('--dy',(Math.sin(a)*dist)+'px');
+    sh.style.setProperty('--r',(Math.random()*720-360)+'deg');
+    sh.style.width=(8+Math.random()*22)+'px';
+    sh.style.animationDelay=(Math.random()*0.15)+'s';
+    ov.appendChild(sh);
+  }
+  const h=document.createElement('h1'); h.textContent='VAISSEAU DÉTRUIT'; ov.appendChild(h);
+  const p=document.createElement('p');
+  p.innerHTML = prev!==next ? `Retour de sauvetage : ${prev} → ${next}.<br>Score remis à zéro.` : `Grade minimum : vous repartez sur un ${next}.<br>Score remis à zéro.`;
+  ov.appendChild(p);
+  const hint=document.createElement('div'); hint.className='dfx-hint'; hint.textContent='Touchez pour continuer';
+  ov.appendChild(hint);
+  ov.addEventListener('click',()=>ov.remove());
+  document.body.appendChild(ov);
+  if(navigator.vibrate) navigator.vibrate([250,120,400]);
+  setTimeout(()=>{ if(ov.parentNode) ov.remove(); },6000);
+}
+
 function shipDestroyed(){
   const order=['FROMBOLA','GLADIUM','SPATHA','HASTA'];
   const idx=order.indexOf(state.shipClass);
   const nc=idx>0?order[idx-1]:'FROMBOLA';
-  log('SPACE COMPUTER',`<b>VAISSEAU DÉTRUIT.</b> Retour de sauvetage : ${state.shipClass} → ${nc}, score remis à zéro.`);
+  log('SPACE COMPUTER',`<b>VAISSEAU DÉTRUIT.</b> ${state.shipClass!==nc ? `Retour de sauvetage : ${state.shipClass} → ${nc}` : `Grade minimum : vous repartez sur un ${nc}`}, score remis à zéro.`);
+  showShipDestroyedFx(state.shipClass, nc);
   addDebugLog(`Destruction : ${state.shipClass} → ${nc}`);
   state.shipClass=nc; state.maxContainers=SHIPS[nc].cont; state.points=0;
   state.ship={crew:SHIPS[nc].eqMin,shields:1,lasers:1,radars:2,computers:1,tanks:3,modules:0,mod_zip3:0,mod_ho12:0,mod_sil4:0};
@@ -1006,6 +1060,7 @@ function passTurn(){
     const dx = p.x - state.position.x, dy = p.y - state.position.y, dist = Math.max(Math.abs(dx), Math.abs(dy));
     if(dist <= radar){
       if(!state.observablePlanets.includes(p.id)) state.observablePlanets.push(p.id);
+      if(dist === 0) return;
       const isNew = !p.discovered;
       let dirText = formatDirection(dx, dy);
       if(!p.report || 1 < p.report.step) p.report = {step: 1, dist: dist, dir: dirText};
@@ -1223,7 +1278,7 @@ function switchToGroundMode(){
 
 function prepareLanding(planet){
   if(planet.done){ alert('Cette planète est déjà connue : elle ne rapporte plus de points.'); return; }
-  state.currentPlanet=planet; state.crewGround=0; state.menGround=0; state.hasGroundCrew=false; state.landedTurns=0; state.menLost=0; state.missionResult=null; state.mission=null; state.missionUsed=false; state.allianceFails=0; state.commTurns=0; state.encounterRolled=false; state.landingBehavior=null; state.landingZone=null;
+  state.reembarked=false; state.currentPlanet=planet; state.crewGround=0; state.menGround=0; state.hasGroundCrew=false; state.landedTurns=0; state.menLost=0; state.missionResult=null; state.mission=null; state.missionUsed=false; state.allianceFails=0; state.commTurns=0; state.encounterRolled=false; state.landingBehavior=null; state.landingZone=null;
   disembarkCount = Math.min(1, state.ship.crew);
   updateDisembarkUI();
   state.isInFlight = false;
@@ -1269,6 +1324,7 @@ function confirmBehavior(){
   const b=v.value, needOn=(b==='A'||b==='B');
   state.landingBehavior = b;
   state.shieldsOn = needOn;
+  renderShip();
   const chk = document.getElementById('check-shields');
   if(chk) chk.checked = needOn;
   renderShip();
@@ -1423,7 +1479,25 @@ function disembark(){
   addDebugLog(`Débarquement : ${state.menGround} hommes (${isObjectPlanet?'Objet à ramasser':(raceId||'aucun')}).`);
 }
 
+function syncAlienState(){
+  state.alienWounded = Math.max(0, Math.min(state.alienWounded, state.currentAliens));
+  document.getElementById('alien-count').innerText = state.currentAliens;
+  document.getElementById('alien-wounded').innerText = state.alienWounded;
+  const r = state.alienRace ? RACES[state.alienRace] : null;
+  if(!r || !state.currentPlanet) return;
+  const ch = ensureChain(state.currentPlanet);
+  let fcStr = alienFC();
+  if(state.alienRace==='SPHAERAE') fcStr = '0.5 (équipage) / 1 à 2.5 (vaisseau)';
+  if(state.alienRace==='NORMO') fcStr = 'Égal à F.C. Légion';
+  if(state.alienRace==='SIPCO') fcStr = 'Défense Légion (+2 Att)';
+  if(state.alienRace==='ATTLERS') fcStr = 'Défense Légion (+1D6 Att)';
+  if(state.alienRace==='CRONOS') fcStr = 'Légion × 1D6';
+  const reduced = state.alienWounded>0 && state.currentAliens>0 && state.alienWounded>=state.currentAliens;
+  document.getElementById('alien-sub').innerText = `${r.type.replace(/_/g,' ')} · Nature : ${NATURE_NAME[ch.nature]||'—'} · F.C. ${fcStr}${reduced?' (réduit de 50 %)':''}`;
+}
+
 function checkGroundStatusAfterCombat(){
+  syncAlienState();
   document.getElementById('alien-count').innerText = state.currentAliens;
   document.getElementById('alien-wounded').innerText = state.alienWounded;
   state.hasGroundCrew = state.menGround > 0;
@@ -1478,7 +1552,8 @@ function startCombat(){
     }
 
     // L'attaque rend tous les survivants hostiles (Règlement U.C. 4-I)
-    if(ch) ch.nature = 'AGRESSIVE';
+    syncAlienState();
+    if(ch && ch.nature !== 'AGRESSIVE'){ ch.nature = 'AGRESSIVE'; log('SPACE COMPUTER','Attaque de la Légion : les Extrasolaires survivants deviennent agressifs (nature : Agressive).'); syncAlienState(); }
 
     if(state.currentAliens <= 0 && state.alienRace){
       let rv = RACES[state.alienRace].valeurElim || 3;
@@ -1951,9 +2026,11 @@ function reembark(){
   state.missionResult = null;
   
   document.getElementById('landing-crew').innerText = `${state.ship.crew} à bord · 0 à terre`;
+  state.reembarked = true;
   document.getElementById('btn-reembark').style.display = 'none';
   hideAllMissionBtns();
   document.getElementById('btn-orbit').style.display = 'block';
+  renderShip();
   log('SPACE COMPUTER', 'Équipages réembarqués. Prêt pour le décollage.');
 }
 
@@ -2156,7 +2233,7 @@ function renderDebugMap(){
 function loadNotiusScenario(){
   state.isScenario=true; state.scenarioStep=1; state.turn=1; state.points=0; state.isInFlight=false;
   state.basePos={x:0,y:0,z:1}; state.position={x:0,y:0,z:1};
-  state.shipClass='GLADIUM'; state.maxContainers=SHIPS.GLADIUM.cont;
+  state.shipClass='FROMBOLA'; state.maxContainers=SHIPS.FROMBOLA.cont;
   state.ship={crew:2,shields:5,lasers:3,radars:2,computers:1,tanks:3,modules:0,mod_zip3:0,mod_ho12:0,mod_sil4:0};
   state.planets=[
     {id:0,x:0,y:0,z:1,type:'BASE',infoLevel:0,discovered:true,report:null,done:false},

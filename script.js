@@ -33,6 +33,15 @@ const TAB_B = {
 
 // Tableau C : Dégâts vaisseau
 const TAB_C = {1:'bou',2:'las',3:'rad',4:'com',5:'res',6:'coque'};
+// Noms complets affichés dans le journal (sans abréviations)
+const NOM_ELEMENT = {
+  bou:   'boucliers SOK 9',
+  las:   'lasers de bord ZIP 11',
+  rad:   'radars VISUS',
+  com:   'ordinateurs MATER',
+  res:   'réservoirs J.NA',
+  coque: 'coque du vaisseau'
+};
 
 // Tableau D : Capture Non Sapiens
 const TAB_D = {
@@ -780,9 +789,9 @@ function hitShip(n){
       continue;
     }
     const key={bou:'shields',las:'lasers',rad:'radars',com:'computers',res:'tanks'}[el];
-    if(state.ship[key]>0){ state.ship[key]--; log('SPACE COMPUTER',`Dégât : un élément « ${el} » est détruit.`);
+    if(state.ship[key]>0){ state.ship[key]--; log('SPACE COMPUTER',`Dégât : un élément « ${NOM_ELEMENT[el]} » est détruit.`);
       if(key==='shields' && state.ship.shields<=0){ state.shieldsOn=false; log('SPACE COMPUTER','<b>Boucliers détruits</b> : aucun bouclier disponible (F.C. Dif. = coque, 2).'); } }
-    else log('SPACE COMPUTER',`Dégât sur « ${el} » absent du vaisseau : ignoré.`);
+    else log('SPACE COMPUTER',`Dégât sur « ${NOM_ELEMENT[el]} » absent du vaisseau : ignoré.`);
   }
   if(n > 0 && state.specialite) verifierDecesOfficier();
   renderShip(); updateRouteLimits();

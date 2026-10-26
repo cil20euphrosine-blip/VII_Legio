@@ -9,6 +9,10 @@
   --pop-text: #f2efe6;
   --pop-time: #aab2bd;
 }
+/* Gain de place sur la ligne des chips pour loger le bouton Messages */
+.status-bar { gap: 4px; }
+.status-bar .status-item { padding: 4px 6px; }
+
 /* Bouton dans la ligne des chips (.status-bar), couleurs inversées */
 .status-item.popup-sms-chip {
   /* Même gabarit que .status-item : la règle globale button (min-height 44px, padding 10px) est neutralisée */

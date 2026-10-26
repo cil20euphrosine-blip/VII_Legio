@@ -11,11 +11,12 @@
 }
 /* Bouton dans la ligne des chips (.status-bar), couleurs inversées */
 .status-item.popup-sms-chip {
-  cursor: pointer; font: inherit; font-size: inherit;
+  cursor: pointer; font: inherit; font-size: .85em; white-space: nowrap;
+  padding: 4px 6px; flex: 0 0 auto;
   background: var(--dark-teal); color: #fff; border: 1px solid var(--dark-teal);
   font-weight: bold; margin-left: auto;
 }
-.status-item.popup-sms-chip.off { opacity: .55; }
+.status-item.popup-sms-chip.off { background: var(--sand); color: var(--dark-teal); }
 .status-item.popup-sms-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #popup-sms {
   position: fixed; left: 0; right: 0; top: 56px; bottom: 96px; z-index: 800;

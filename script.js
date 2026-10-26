@@ -432,6 +432,7 @@ function log(sender,text){
   div.className=`log-entry ${sender==='SPACE COMPUTER'?'log-sc':'log-uc'}`;
   div.innerHTML=`<div class="log-sender">${sender}</div><div>${text}</div>`;
   c.prepend(div);
+  if(window.PopupSMS) window.PopupSMS.add(sender,text); // pop-up SMS (popup-sms.js)
 }
 
 function logCombat(text){ const cl=document.getElementById('combat-log'); cl.style.display='block'; cl.innerHTML=text; }

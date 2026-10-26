@@ -750,7 +750,7 @@ function renderShip(){
   
   document.getElementById('ship-title').innerText=`${state.shipClass} « MARTHIA » · niveau ${c.level}`;
   document.querySelectorAll('#tab-vaisseau .stat-row > .counter > button, .module-row .counter button').forEach(b=>b.disabled=state.isInFlight);
-  document.getElementById('display-shields').innerText=`Boucliers : ${state.shieldsOn?'Activés':'Désactivés'}`;
+  document.getElementById('display-shields').innerText=`Boucliers ${state.shieldsOn?'Activés':'Désactivés'}`;
   document.getElementById('display-shields').className=`status-item ${state.shieldsOn?'active':'danger'}`;
 }
 
@@ -758,7 +758,7 @@ function setShields(on){
   if(on && state.ship.shields<=0){ alert('Plus aucun bouclier à bord.'); document.getElementById('check-shields').checked=false; return; }
   if(state.shieldsLocked){ alert('Les boucliers sont fixés pour ce tour.'); document.getElementById('check-shields').checked=state.shieldsOn; return; }
   state.shieldsOn=on;
-  document.getElementById('display-shields').innerText=`Boucliers : ${on?'Activés':'Désactivés'}`;
+  document.getElementById('display-shields').innerText=`Boucliers ${on?'Activés':'Désactivés'}`;
   document.getElementById('display-shields').className=`status-item ${on?'active':'danger'}`;
   renderShip();
 }
@@ -2278,7 +2278,7 @@ function resetGame(){
   document.getElementById('scenario-banner').style.display='none';
   document.getElementById('display-points').innerText='0';
   document.getElementById('display-turn').innerText='Tour 1';
-  document.getElementById('display-shields').innerText='Boucliers : Activés';
+  document.getElementById('display-shields').innerText='Boucliers Activés';
   document.getElementById('display-shields').className='status-item active';
   document.getElementById('check-shields').checked=true;
   syncScientistUI();
@@ -2648,7 +2648,7 @@ function rafraichirApresRestauration(){
   $('display-points').innerText = state.points;
   $('display-turn').innerText = 'Tour ' + state.turn;
   $('display-level').innerText = 'Niveau ' + state.position.z;
-  $('display-shields').innerText = 'Boucliers : ' + (state.shieldsOn ? 'Activés' : 'Désactivés');
+  $('display-shields').innerText = 'Boucliers ' + (state.shieldsOn ? 'Activés' : 'Désactivés');
   $('display-shields').className = 'status-item' + (state.shieldsOn ? ' active' : '');
   $('check-shields').checked = state.shieldsOn;
   renderShip();

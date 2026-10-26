@@ -10,14 +10,17 @@
   --pop-time: #aab2bd;
 }
 /* Gain de place sur la ligne des chips pour loger le bouton Messages */
-.status-bar { gap: 4px; }
-.status-bar .status-item { padding: 4px 6px; }
+.status-bar { gap: 4px; flex-wrap: nowrap; }
+.status-bar .status-item {
+  padding: 4px 6px; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; flex: 0 1 auto;
+}
 
 /* Bouton dans la ligne des chips (.status-bar), couleurs inversées */
 .status-item.popup-sms-chip {
   /* Même gabarit que .status-item : la règle globale button (min-height 44px, padding 10px) est neutralisée */
   cursor: pointer; font: inherit; line-height: inherit; white-space: nowrap;
-  min-height: 0; height: auto; padding: 4px 8px; margin: 0; flex: 0 0 auto;
+  min-height: 0; height: auto; padding: 4px 8px; margin: 0; flex: 0 0 auto; overflow: visible;
   background: var(--dark-teal); color: #fff; border: 1px solid var(--dark-teal);
   font-weight: bold; margin-left: auto; border-radius: 4px;
 }

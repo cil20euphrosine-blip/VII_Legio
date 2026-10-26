@@ -269,9 +269,9 @@ function alienFC(){
 // Les pertes sont décomptées sur un équipage jusqu'à zéro homme valide, puis sur le suivant.
 // ==========================================
 function syncGround(){
-  state.groundCrews = (state.groundCrews || []).filter(c => c.v > 0);
+  state.groundCrews = (state.groundCrews || []).filter(c => c.v > 0 || c.k > 0);
   state.menGround = state.groundCrews.reduce((a,c) => a + c.v, 0);
-  state.crewGround = state.groundCrews.length;
+  state.crewGround = state.groundCrews.filter(c => c.v > 0).length;
   state.hasGroundCrew = state.menGround > 0;
 }
 function ajouterEquipage(){
@@ -293,14 +293,18 @@ function retirerHommesValides(n){
   }
   syncGround();
 }
-// Le médecin (vivant) remet en état un équipage entier par tour de vol
+// Le médecin (vivant) récupère un équipage blessé par tour de vol.
+// Les blessés (k) reprennent leur place (v), sans créer d'hommes ; les tués restent perdus.
 function medecinRestaure(){
   if(state.specialite !== 'médecin' || !state.groundCrews) return;
-  const c = state.groundCrews.find(c => c.k > 0 && c.v >= 1);
+  if(state.medecinTour === state.turn) return; // une seule récupération par tour
+  const c = state.groundCrews.find(c => c.k > 0);
   if(!c) return;
-  c.v = 3; c.k = 0;
+  const n = c.k;
+  state.medecinTour = state.turn;
+  c.v += c.k; c.k = 0;
   syncGround();
-  log('SPACE COMPUTER', 'Le Médecin remet en état un équipage complet (3 hommes).');
+  log('SPACE COMPUTER', `Le Médecin récupère un équipage blessé : ${n} homme(s) remis en état.`);
 }
 
 function groundLegionAtt(includeWeapons){
@@ -433,6 +437,7 @@ function log(sender,text){
   div.innerHTML=`<div class="log-sender">${sender}</div><div>${text}</div>`;
   c.prepend(div);
   if(window.PopupSMS) window.PopupSMS.add(sender,text); // pop-up SMS (popup-sms.js)
+  scheduleAutosave();
 }
 
 function logCombat(text){ const cl=document.getElementById('combat-log'); cl.style.display='block'; cl.innerHTML=text; }
@@ -611,7 +616,7 @@ function placeRisks(){
 }
 
 function startGame(){
-  opLog=[];
+  opLog=[]; state.medecinTour=null;
   generateMap();
   state.risks = null;
   if(state.level==='AVANCE') placeRisks();
@@ -1132,6 +1137,7 @@ function passTurn(){
 
 function finishTurn(){
   medecinRestaure();
+  scheduleAutosave();
   state.isInFlight = state.isInFlight && (state.position.x!==state.basePos.x || state.position.y!==state.basePos.y || state.position.z!==state.basePos.z);
   state.shieldsLocked=false;
   state.computersUsedThisTurn=0;
@@ -2270,6 +2276,7 @@ function renderBestiaireDetail(raceKey) {
 // ==========================================
 function resetGame(){
   if(!confirm('Abandonner et réinitialiser la partie ?')) return;
+  try{ localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(TURNS_KEY); }catch(err){}
   state.turn=1; state.points=0; state.isInFlight=false; state.isScenario=false; state.scenarioStep=0;
   state.shipClass='FROMBOLA'; state.maxContainers=SHIPS.FROMBOLA.cont;
   state.ship={crew:1,shields:1,lasers:1,radars:2,computers:1,tanks:3,modules:0,mod_zip3:0,mod_ho12:0,mod_sil4:0};
@@ -2490,8 +2497,7 @@ if(verEl) {
 ensureMissionButtons();
 document.getElementById('dev-tools').style.display = DEBUG ? 'block' : 'none';
 document.getElementById('level-select').value=state.level;
-startGame();
-switchTab('vaisseau');
+
 
 
 // ==========================================
@@ -2657,6 +2663,89 @@ function rafraichirApresRestauration(){
   if(typeof renderOpLog === 'function') renderOpLog();
 }
 
+// ==========================================
+// SAUVEGARDE AUTOMATIQUE (navigateur)
+// Conserve la partie en cours entre deux rechargements de la page.
+// ==========================================
+const AUTOSAVE_KEY = 'legio_autosave_v1';
+let autosaveTimer = null;
+
+const TURNS_KEY = 'legio_turns_v1';   // instantanés au début de chaque tour
+const TURNS_MAX = 8;
+
+function autosaveNow(){
+  try{
+    const sections = {};
+    for(const nom of Object.keys(SAVE_SECTIONS)) sections[nom] = capturerSection(nom);
+    const donnees = { app: 'Decurio Notius', version: APP_VERSION, date: new Date().toISOString(), sections, opLog };
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(donnees));
+    // premier enregistrement d'un nouveau tour = instantané de début de tour
+    const hist = lireHistoriqueTours();
+    if(!hist.length || hist[hist.length-1].turn !== state.turn){
+      hist.push({ turn: state.turn, date: donnees.date, data: donnees });
+      while(hist.length > TURNS_MAX) hist.shift();
+      ecrireHistoriqueTours(hist);
+    }
+  }catch(err){ /* stockage plein ou désactivé : la partie continue */ }
+}
+
+function lireHistoriqueTours(){
+  try{ const h = JSON.parse(localStorage.getItem(TURNS_KEY) || '[]'); return Array.isArray(h) ? h : []; }
+  catch(err){ return []; }
+}
+function ecrireHistoriqueTours(hist){
+  while(hist.length){
+    try{ localStorage.setItem(TURNS_KEY, JSON.stringify(hist)); return; }
+    catch(err){ hist.shift(); }   // quota dépassé : on retire le plus ancien
+  }
+  try{ localStorage.removeItem(TURNS_KEY); }catch(err){}
+}
+
+// Restaure un instantané complet (sections, journal, journal d'opérations)
+function appliquerDonnees(d){
+  for(const nom of Object.keys(SAVE_SECTIONS)) if(d.sections[nom] !== undefined) appliquerSection(nom, d.sections[nom]);
+  if(Array.isArray(d.opLog)) opLog = d.opLog;
+  rafraichirApresRestauration();
+  renderPlanets();
+}
+
+// Revient au début du tour en cours (ou du tour précédent s'il n'y a pas d'instantané pour le tour en cours)
+function annulerDernierTour(){
+  const hist = lireHistoriqueTours();
+  let cible = hist.find(h => h.turn === state.turn);
+  if(!cible) cible = [...hist].reverse().find(h => h.turn < state.turn);
+  if(!cible){ alert('Aucune sauvegarde de tour disponible.'); return; }
+  if(!confirm(`Revenir au début du tour ${cible.turn} ? Toutes les actions faites depuis seront perdues.`)) return;
+  appliquerDonnees(cible.data);
+  // on retire les instantanés postérieurs au tour restauré
+  ecrireHistoriqueTours(hist.filter(h => h.turn <= cible.turn));
+  autosaveNow();
+  addDebugLog(`Retour au début du tour ${cible.turn}.`);
+  if(document.getElementById('tab-controle').classList.contains('active')) renderControle();
+  alert(`Partie ramenée au début du tour ${cible.turn}.`);
+}
+
+function scheduleAutosave(){
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(autosaveNow, 300);
+}
+
+// Au lancement : propose de reprendre la partie sauvegardée. Retourne true si reprise.
+function proposerReprise(){
+  let d = null;
+  try{ d = JSON.parse(localStorage.getItem(AUTOSAVE_KEY) || 'null'); }catch(err){ d = null; }
+  if(!d || !d.sections) return false;
+  const quand = d.date ? new Date(d.date).toLocaleString() : '?';
+  if(!confirm(`Une partie en cours a été trouvée (sauvegardée le ${quand}). La reprendre ?`)) return false;
+  appliquerDonnees(d);
+  addDebugLog('Partie reprise (sauvegarde automatique).');
+  return true;
+}
+
+// Sauvegarde aussi quand la page est masquée ou fermée
+window.addEventListener('pagehide', autosaveNow);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') autosaveNow(); });
+
 function restaurerSectionsCochees(){
   const msg = document.getElementById('message-sauvegarde');
   if(!sauvegardeChargee){ msg.textContent = 'Aucune sauvegarde chargée.'; return; }
@@ -2677,3 +2766,7 @@ syncScientistUI();
 document.title = `Decurio NOTIUS ${APP_VERSION} — LEGIO VII Solo`;
 const versionControle = document.getElementById('version-controle');
 if(versionControle) versionControle.textContent = `Version de l'application : ${APP_VERSION}`;
+
+// Démarrage (en fin de fichier : toutes les constantes et fonctions sont déjà définies)
+if(!proposerReprise()) startGame();
+switchTab('vaisseau');

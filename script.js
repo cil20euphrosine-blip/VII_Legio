@@ -278,7 +278,7 @@ function alienFC(){
 // Les pertes sont décomptées sur un équipage jusqu'à zéro homme valide, puis sur le suivant.
 // ==========================================
 function syncGround(){
-  state.groundCrews = (state.groundCrews || []).filter(c => c.v > 0 || c.k > 0);
+  state.groundCrews = (state.groundCrews || []).filter(c => c.v > 0);
   state.menGround = state.groundCrews.reduce((a,c) => a + c.v, 0);
   state.crewGround = state.groundCrews.filter(c => c.v > 0).length;
   state.hasGroundCrew = state.menGround > 0;
@@ -290,7 +290,7 @@ function ajouterEquipage(){
 }
 function hommesHorsEtat(n){
   for(const c of (state.groundCrews || [])){
-    while(n > 0 && c.v > 0){ c.v--; c.k++; n--; }
+    while(n > 0 && c.v > 0){ c.v--; n--; }   // une perte retire un homme à l'équipage
     if(n <= 0) break;
   }
   syncGround();
@@ -302,18 +302,18 @@ function retirerHommesValides(n){
   }
   syncGround();
 }
-// Le médecin (vivant) récupère un équipage blessé par tour de vol.
-// Les blessés (k) reprennent leur place (v), sans créer d'hommes ; les tués restent perdus.
+// Le médecin (vivant) complète un équipage : tant qu'il reste au moins un homme,
+// l'équipage est récupéré jusqu'à 3 hommes. Une fois par tour de vol.
 function medecinRestaure(){
   if(state.specialite !== 'médecin' || !state.groundCrews) return;
-  if(state.medecinTour === state.turn) return; // une seule récupération par tour
-  const c = state.groundCrews.find(c => c.k > 0);
+  if(state.medecinTour === state.turn) return;
+  const c = state.groundCrews.find(c => c.v >= 1 && c.v < 3);
   if(!c) return;
-  const n = c.k;
+  const avant = c.v;
   state.medecinTour = state.turn;
-  c.v += c.k; c.k = 0;
+  c.v = 3;
   syncGround();
-  log('SPACE COMPUTER', `Le Médecin récupère un équipage blessé : ${n} homme(s) remis en état.`);
+  log('SPACE COMPUTER', `Le Médecin récupère un équipage : ${avant} → 3 hommes.`);
 }
 
 function groundLegionAtt(includeWeapons){
@@ -2114,7 +2114,8 @@ function reembark(){
   
   const c = cls();
   const complete = state.groundCrews.filter(c => c.v === 3).length;
-  const reembarques = state.groundCrews.length;
+  // Seuls les équipages avec au moins un homme valide reviennent à bord (un équipage entièrement touché ne compte pas)
+  const reembarques = state.groundCrews.filter(c => c.v > 0).length;
   const valid = state.landedTurns >= 1 && complete >= 1;
   
   if(valid && state.missionResult){

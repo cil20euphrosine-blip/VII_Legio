@@ -23,13 +23,17 @@
     t.style.cssText = 'font-size:.6rem;color:var(--pop-time);margin:3px 4px 0;';
     t.textContent = time();
     row.append(who, bubble, t);
-    thread.appendChild(row);
-    thread.scrollTop = thread.scrollHeight;
+    thread.prepend(row); // plus récent en haut, comme le journal de bord
+    thread.scrollTop = 0;
   };
 
-  function isLandingTabActive() {
-    const tab = document.getElementById('tab-debarquer');
-    return !!tab && tab.classList.contains('active');
+  // Onglets où le bouton Messages et le fil sont accessibles
+  const SHOW_ON = ['tab-vaisseau', 'tab-route', 'tab-planetes', 'tab-debarquer'];
+  function isAllowedTabActive() {
+    return SHOW_ON.some(id => {
+      const tab = document.getElementById(id);
+      return !!tab && tab.classList.contains('active');
+    });
   }
 
   // Zone de défilement validée : démarre à 36 % de la hauteur de l'écran,
@@ -49,9 +53,10 @@
   function refreshVisibility() {
     if (!panel) return;
     layout();
-    const show = isLandingTabActive() && !panel.dataset.userHidden;
+    const allowed = isAllowedTabActive();
+    const show = allowed && !panel.dataset.userHidden;
     panel.classList.toggle('hidden', !show);
-    toggle.style.display = isLandingTabActive() ? '' : 'none';
+    toggle.style.display = allowed ? '' : 'none';
   }
 
   function build() {
@@ -87,8 +92,9 @@
       });
     }
 
-    // Affiche le pop-up seulement sur l'onglet ATTERRIR
-    new MutationObserver(refreshVisibility).observe(document.getElementById('tab-debarquer'), { attributes: true, attributeFilter: ['class'] });
+    // Affiche le pop-up sur VAISSEAU, ROUTE, PLANÈTES et ATTERRIR
+    document.querySelectorAll('main').forEach(m =>
+      new MutationObserver(refreshVisibility).observe(m, { attributes: true, attributeFilter: ['class'] }));
     refreshVisibility();
     window.addEventListener('resize', layout);
   }

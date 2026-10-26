@@ -55,43 +55,7 @@
     if (hidden) panel.dataset.userHidden = '1'; else delete panel.dataset.userHidden;
     toggle.classList.toggle('off', hidden);
     toggle.setAttribute('aria-expanded', String(!hidden));
-    if (fab) fab.classList.toggle('off', hidden);
     refreshVisibility();
-  }
-
-  // Bouton rond déplaçable : appui court = afficher/masquer, glisser = déplacer
-  let fab = null;
-  function createFab() {
-    fab = document.createElement('button');
-    fab.id = 'popup-sms-fab';
-    fab.textContent = '✉';
-    fab.setAttribute('aria-label', 'Afficher ou masquer les messages');
-    fab.setAttribute('aria-controls', 'popup-sms');
-    document.body.appendChild(fab);
-
-    let drag = null;
-    fab.addEventListener('pointerdown', e => {
-      const r = fab.getBoundingClientRect();
-      drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, sx: e.clientX, sy: e.clientY, moved: false };
-      fab.setPointerCapture(e.pointerId);
-    });
-    fab.addEventListener('pointermove', e => {
-      if (!drag) return;
-      if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 6) return;
-      drag.moved = true;
-      fab.dataset.dragged = '1';
-      const left = Math.min(Math.max(0, e.clientX - drag.dx), window.innerWidth - fab.offsetWidth);
-      const top = Math.min(Math.max(0, e.clientY - drag.dy), window.innerHeight - fab.offsetHeight);
-      fab.style.left = left + 'px';
-      fab.style.top = top + 'px';
-      fab.style.right = 'auto';
-      fab.style.bottom = 'auto';
-    });
-    fab.addEventListener('pointerup', () => { drag = null; });
-    fab.addEventListener('click', () => {
-      if (fab.dataset.dragged) { delete fab.dataset.dragged; return; }
-      togglePanel();
-    });
   }
 
   function refreshVisibility() {
@@ -101,7 +65,6 @@
     const show = allowed && !panel.dataset.userHidden;
     panel.classList.toggle('hidden', !show);
     toggle.style.display = allowed ? '' : 'none';
-    if (fab) fab.style.display = allowed ? '' : 'none';
   }
 
   function build() {
@@ -120,7 +83,6 @@
     document.body.appendChild(panel);
 
     toggle.addEventListener('click', togglePanel);
-    createFab();
 
     // Reprend les messages déjà présents dans le journal (le plus ancien d'abord)
     const log = document.getElementById('log-container');

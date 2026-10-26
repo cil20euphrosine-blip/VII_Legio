@@ -52,16 +52,3 @@
 .popup-sms-row.uc .popup-sms-bubble { background: var(--pop-uc-bg); border-color: var(--pop-uc-line); border-top-right-radius: 3px; }
 .popup-sms-bubble b { color: var(--pop-sc-name); }
 .popup-sms-row.uc .popup-sms-bubble b { color: var(--pop-uc-name); }
-
-/* Bouton flottant déplaçable (raccourci Messages) */
-#popup-sms-fab {
-  position: fixed; right: 8px; top: 45%; z-index: 900;
-  width: 52px; height: 52px; min-height: 0; padding: 0; margin: 0;
-  border-radius: 50%; border: 1px solid var(--dark-teal);
-  background: var(--dark-teal); color: #fff; font-size: 1.3rem; line-height: 1;
-  box-shadow: 0 3px 10px rgba(0,0,0,.3);
-  display: flex; align-items: center; justify-content: center;
-  cursor: grab; touch-action: none; user-select: none;
-}
-#popup-sms-fab.off { background: var(--sand); color: var(--dark-teal); }
-#popup-sms-fab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

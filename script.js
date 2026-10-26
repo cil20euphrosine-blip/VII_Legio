@@ -508,7 +508,7 @@ function rollStep(p,step){
     // Ajustement de la nature selon les notes du Guide (Marchands = Pacifiques ou Hostiles)
     if(ch.nature === 'MARCHAND'){
       if(['ALGHIDI','ELPH','SIPCO','CRONOS'].includes(k)) ch.nature = 'PACIFIQUE';
-      else if(k === 'ATTLERS') ch.nature = 'AGRESSIVE';
+      else if(k === 'ATTLERS') changerNature(ch, 'AGRESSIVE', 'rollStep');
     }
     return {status:'end',text:'Race : '+k.replace(/_/g,' ')+' (planche '+RACES[k].ref+').'};
   }
@@ -1591,6 +1591,15 @@ function addSecorOrOzBonus(pts){
   return pts;
 }
 
+// Seul point de changement de nature : chaque changement est journalisé avec sa cause
+function changerNature(ch, nature, cause){
+  if(!ch || ch.nature === nature) return;
+  ch.nature = nature;
+  log('SPACE COMPUTER', `Nature de l'Extrasolaire : ${NATURE_NAME[nature]||nature} (${cause}).`);
+  recordOp('Nature', 'Changement de nature', {cause:cause}, nature, '');
+  renderPlanets(); // la fiche PLANÈTES affiche la nature à jour
+}
+
 function startCombat(){
   if(state.currentAliens <= 0){ log('SPACE COMPUTER', "Plus d'Extrasolaire à combattre."); return; }
   const ch = state.currentPlanet ? state.currentPlanet.chain : null;
@@ -1718,7 +1727,7 @@ function startCombat(){
   }
 
   // L'attaque rend tous les survivants hostiles
-  if(ch) ch.nature = 'AGRESSIVE';
+  if(ch) changerNature(ch, 'AGRESSIVE', 'tir de la Légion');
 
   if(state.currentAliens <= 0 && state.alienRace){
     let rv = RACES[state.alienRace].valeurElim || 3;
@@ -1777,7 +1786,7 @@ function startCapture(){
     log('SPACE COMPUTER', `Capture réussie (${pts} pts). Réembarquez au moins 1 équipage complet pour valider les points.`);
   } else if(res === 'N'){
     state.missionUsed = true;
-    if(ch) ch.nature = 'AGRESSIVE';
+    if(ch) changerNature(ch, 'AGRESSIVE', 'capture ratée');
     logCombat(`<b>Tableau D · dé ${d} · diff ${diff>=0?'+':''}${diff} : NON (▲) !</b><br>La créature s'affole, devient agressive et attaque immédiatement !`);
     riposte();
     state.missionResult = {key:'capture', points:0};
@@ -1823,7 +1832,7 @@ function startIntim(){
     logCombat(`<b>Tableau F · dé ${r} : OUI (Δ).</b> <b>Tableau G (dé ${rawG}${state.level==='AVANCE'?` − pers. ${state.personality} = ${modG}`:''})</b> : ${pts} point(s) de vénération.`);
   } else if(res==='N'){
     state.missionUsed = true;
-    if(ch) ch.nature = 'AGRESSIVE';
+    if(ch) changerNature(ch, 'AGRESSIVE', 'intimidation ratée');
     logCombat(`<b>Tableau F · dé ${r} : NON (▲).</b> Les Extrasolaires deviennent agressifs et contre-attaquent.`);
     if(state.hasGroundCrew) riposte();
     state.missionResult={key:'intim',points:0};
@@ -1888,7 +1897,7 @@ function startRotsa(){
   log('OFFICIER COMMANDANT', `Tentative de prise de la Pierre sacrée ROTSA avec ${crews} équipage(s).`);
   if(pts === null){
     const ch = state.currentPlanet ? state.currentPlanet.chain : null;
-    if(ch) ch.nature = 'AGRESSIVE';
+    if(ch) changerNature(ch, 'AGRESSIVE', 'Pierre ROTSA : colère');
     logCombat(`<b>Tableau ROTSA · dé ${r} (${crews} E.)</b> : <b>nn</b> — Aucun point obtenu ! Les NILBOG se mettent en colère et attaquent les intrus.`);
     riposte();
     state.missionResult={key:'rotsa',points:0};
@@ -1960,7 +1969,7 @@ function startAlliance(){
     state.missionUsed = true;
     state.allianceFails++;
     if(state.specialite === 'sociologue') perdreOfficier('Sociologue', state.savant, "rupture de l'alliance");
-    if(ch) ch.nature = 'AGRESSIVE';
+    if(ch) changerNature(ch, 'AGRESSIVE', 'alliance ratée');
     logCombat(`<b>Tableau E · dé ${rawDie}${persMod?` (− pers. ${persMod} = ${modDie})`:''} · F.All ${fAll} : NON (▲) !</b><br>Rupture diplomatique ! Les ${rid.replace(/_/g,' ')} attaquent immédiatement sans riposte possible ce tour.`);
     riposte();
     state.missionResult={key:'alliance',points:0};

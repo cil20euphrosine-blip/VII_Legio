@@ -42,19 +42,22 @@
   function build() {
     toggle = document.createElement('button');
     toggle.id = 'popup-sms-toggle';
-    toggle.textContent = 'Masquer les messages';
+    toggle.className = 'status-item popup-sms-chip';
+    toggle.textContent = 'Masquer messages';
     toggle.setAttribute('aria-expanded', 'true');
     panel = document.createElement('div');
     panel.id = 'popup-sms';
     thread = document.createElement('div');
     thread.className = 'thread';
     panel.appendChild(thread);
-    document.body.append(toggle, panel);
+    const bar = document.querySelector('.status-bar');
+    (bar || document.body).appendChild(toggle);
+    document.body.appendChild(panel);
 
     toggle.addEventListener('click', () => {
       const hidden = panel.dataset.userHidden ? false : true;
       if (hidden) panel.dataset.userHidden = '1'; else delete panel.dataset.userHidden;
-      toggle.textContent = hidden ? 'Afficher les messages' : 'Masquer les messages';
+      toggle.textContent = hidden ? 'Afficher messages' : 'Masquer messages';
       toggle.setAttribute('aria-expanded', String(!hidden));
       refreshVisibility();
     });

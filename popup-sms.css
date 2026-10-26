@@ -9,14 +9,13 @@
   --pop-text: #f2efe6;
   --pop-time: #aab2bd;
 }
-#popup-sms-toggle {
-  position: fixed; top: 10px; right: 10px; z-index: 900;
-  font: inherit; font-size: .72rem; font-weight: 700;
-  color: var(--dark-teal); background: #fff;
-  border: 1px solid var(--dark-teal); border-radius: 14px;
-  padding: 5px 11px; cursor: pointer; box-shadow: 0 2px 6px rgba(28,58,67,.15);
+/* Bouton dans la ligne des chips (.status-bar), couleurs inversées */
+.status-item.popup-sms-chip {
+  cursor: pointer; font: inherit; font-size: inherit;
+  background: var(--dark-teal); color: #fff; border: 1px solid var(--dark-teal);
+  font-weight: bold; margin-left: auto;
 }
-#popup-sms-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.status-item.popup-sms-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #popup-sms {
   position: fixed; left: 0; right: 0; top: 56px; bottom: 96px; z-index: 800;
   pointer-events: none; display: flex; flex-direction: column; justify-content: flex-end;

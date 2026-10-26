@@ -278,10 +278,46 @@ function alienFC(){
 // Les pertes sont décomptées sur un équipage jusqu'à zéro homme valide, puis sur le suivant.
 // ==========================================
 function syncGround(){
+  const avant = (state.groundCrews || []).length;
   state.groundCrews = (state.groundCrews || []).filter(c => c.v > 0);
+  const perdus = avant - state.groundCrews.length;
+  if(perdus > 0) state.equipagesPerdus = (state.equipagesPerdus || 0) + perdus;
   state.menGround = state.groundCrews.reduce((a,c) => a + c.v, 0);
   state.crewGround = state.groundCrews.filter(c => c.v > 0).length;
   state.hasGroundCrew = state.menGround > 0;
+  renderDecompte();
+}
+
+// Affiche le décompte des hommes par équipage, les équipages perdus et l'intervention du médecin
+function renderDecompte(){
+  const ref = document.getElementById('landing-crew');
+  if(!ref) return;
+  let box = document.getElementById('crew-count');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'crew-count';
+    box.style.cssText = 'margin-top:6px;font-size:13px;line-height:1.5;';
+    ref.insertAdjacentElement('afterend', box);
+  }
+  const equipages = state.groundCrews || [];
+  let html = '';
+  if(equipages.length === 0 && (state.landedTurns||0) === 0){
+    html = '';
+  } else if(equipages.length === 0){
+    html += '<div>Aucun équipage à terre.</div>';
+  } else {
+    html += '<div><b>Hommes par équipage :</b></div>';
+    equipages.forEach((c, i) => {
+      const couleur = c.v === 3 ? '#1c3a43' : '#9a7530';
+      html += `<div style="color:${couleur};">Équipage ${i+1} : <b>${c.v}/3</b> homme(s)${c.v<3?' · incomplet':''}</div>`;
+    });
+  }
+  if(state.equipagesPerdus) html += `<div style="color:#c9463d;">Équipages perdus : ${state.equipagesPerdus}</div>`;
+  if(state.specialite === 'médecin'){
+    const intervenu = state.medecinTour === state.turn;
+    html += `<div style="color:#5b8a9e;">Médecin : ${intervenu ? 'intervenu ce tour' : 'pas intervenu ce tour'}</div>`;
+  }
+  box.innerHTML = html;
 }
 function ajouterEquipage(){
   state.groundCrews = state.groundCrews || [];
@@ -1488,6 +1524,7 @@ function setLandingZone(z){
 }
 
 function disembark(){
+  state.equipagesPerdus = 0;
   if(state.shieldsOn) return alert('Boucliers activés : débarquement impossible.');
   if(state.ship.crew<=0) return alert("Pas d'équipage disponible à bord.");
   if(state.lastDisembarkTurn === state.turn) return alert("Un débarquement ne peut pas avoir lieu dans le même tour qu'un débarquement précédent : passez d'abord un tour sur la planète.");

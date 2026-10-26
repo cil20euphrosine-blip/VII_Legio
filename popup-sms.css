@@ -11,10 +11,11 @@
 }
 /* Bouton dans la ligne des chips (.status-bar), couleurs inversées */
 .status-item.popup-sms-chip {
-  cursor: pointer; font: inherit; font-size: .85em; white-space: nowrap;
-  padding: 4px 6px; flex: 0 0 auto;
+  /* Même gabarit que .status-item : la règle globale button (min-height 44px, padding 10px) est neutralisée */
+  cursor: pointer; font: inherit; line-height: inherit; white-space: nowrap;
+  min-height: 0; height: auto; padding: 4px 8px; margin: 0; flex: 0 0 auto;
   background: var(--dark-teal); color: #fff; border: 1px solid var(--dark-teal);
-  font-weight: bold; margin-left: auto;
+  font-weight: bold; margin-left: auto; border-radius: 4px;
 }
 .status-item.popup-sms-chip.off { background: var(--sand); color: var(--dark-teal); }
 .status-item.popup-sms-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

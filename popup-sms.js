@@ -43,7 +43,7 @@
     toggle = document.createElement('button');
     toggle.id = 'popup-sms-toggle';
     toggle.className = 'status-item popup-sms-chip';
-    toggle.textContent = 'Masquer messages';
+    toggle.textContent = 'Messages';
     toggle.setAttribute('aria-expanded', 'true');
     panel = document.createElement('div');
     panel.id = 'popup-sms';
@@ -57,7 +57,7 @@
     toggle.addEventListener('click', () => {
       const hidden = panel.dataset.userHidden ? false : true;
       if (hidden) panel.dataset.userHidden = '1'; else delete panel.dataset.userHidden;
-      toggle.textContent = hidden ? 'Afficher messages' : 'Masquer messages';
+      toggle.classList.toggle('off', hidden);
       toggle.setAttribute('aria-expanded', String(!hidden));
       refreshVisibility();
     });

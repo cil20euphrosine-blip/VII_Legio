@@ -15,6 +15,7 @@
   background: var(--dark-teal); color: #fff; border: 1px solid var(--dark-teal);
   font-weight: bold; margin-left: auto;
 }
+.status-item.popup-sms-chip.off { opacity: .55; }
 .status-item.popup-sms-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #popup-sms {
   position: fixed; left: 0; right: 0; top: 56px; bottom: 96px; z-index: 800;

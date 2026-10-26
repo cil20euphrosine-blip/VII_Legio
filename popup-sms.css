@@ -27,7 +27,7 @@
 .status-item.popup-sms-chip.off { background: var(--sand); color: var(--dark-teal); }
 .status-item.popup-sms-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #popup-sms {
-  position: fixed; left: 0; right: 0; top: 56px; bottom: 96px; z-index: 800;
+  position: fixed; left: 0; right: 0; top: 150px; bottom: 60px; z-index: 800;
   pointer-events: none; display: flex; flex-direction: column; justify-content: flex-end;
 }
 #popup-sms.hidden { display: none; }

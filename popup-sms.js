@@ -32,8 +32,18 @@
     return !!tab && tab.classList.contains('active');
   }
 
+  // Cale le fil entre le bas de l'en-tête et le haut de la barre de navigation
+  function layout() {
+    if (!panel) return;
+    const header = document.querySelector('header');
+    const nav = document.querySelector('nav');
+    if (header) panel.style.top = header.getBoundingClientRect().bottom + 'px';
+    if (nav) panel.style.bottom = (window.innerHeight - nav.getBoundingClientRect().top) + 'px';
+  }
+
   function refreshVisibility() {
     if (!panel) return;
+    layout();
     const show = isLandingTabActive() && !panel.dataset.userHidden;
     panel.classList.toggle('hidden', !show);
     toggle.style.display = isLandingTabActive() ? '' : 'none';
@@ -75,6 +85,7 @@
     // Affiche le pop-up seulement sur l'onglet ATTERRIR
     new MutationObserver(refreshVisibility).observe(document.getElementById('tab-debarquer'), { attributes: true, attributeFilter: ['class'] });
     refreshVisibility();
+    window.addEventListener('resize', layout);
   }
 
   document.addEventListener('DOMContentLoaded', build);

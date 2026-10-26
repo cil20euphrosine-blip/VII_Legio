@@ -32,13 +32,18 @@
     return !!tab && tab.classList.contains('active');
   }
 
-  // Cale le fil entre le bas de l'en-tête et le haut de la barre de navigation
+  // Zone de défilement validée : démarre à 36 % de la hauteur de l'écran,
+  // s'arrête à 68 px au-dessus de la barre de navigation.
+  const TOP_RATIO = 0.36;
+  const GAP_ABOVE_NAV = 68;
   function layout() {
     if (!panel) return;
-    const header = document.querySelector('header');
     const nav = document.querySelector('nav');
-    if (header) panel.style.top = header.getBoundingClientRect().bottom + 'px';
-    if (nav) panel.style.bottom = (window.innerHeight - nav.getBoundingClientRect().top) + 'px';
+    panel.style.top = Math.round(window.innerHeight * TOP_RATIO) + 'px';
+    if (nav) {
+      const navTop = nav.getBoundingClientRect().top;
+      panel.style.bottom = Math.max(0, window.innerHeight - (navTop - GAP_ABOVE_NAV)) + 'px';
+    }
   }
 
   function refreshVisibility() {

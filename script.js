@@ -850,14 +850,25 @@ function flashDegat(){
   setTimeout(() => h.classList.remove('flash-degat'), 900);
 }
 
-// Test du retour (vibration + flash), accessible depuis CONTRÔLE
+// Secousse de la page ATTERRIR seulement (en-tête et navigation restent fixes)
+function secouerAtterrissage(){
+  const t = document.getElementById('tab-debarquer');
+  if(!t) return;
+  t.classList.remove('shake-degat');
+  void t.offsetWidth;
+  t.classList.add('shake-degat');
+  setTimeout(() => t.classList.remove('shake-degat'), 950);
+}
+
+// Test du retour (vibration + flash + secousse), accessible depuis CONTRÔLE
 function testerRetourDegat(){
   vibrer([200, 100, 200]);
   flashDegat();
+  secouerAtterrissage();
 }
 
 function hitShip(n){
-  if(n > 0){ vibrer(n >= 2 ? [200,80,200,80,200] : [150]); flashDegat(); }   // dégât vaisseau : vibration courte, plus longue si plusieurs
+  if(n > 0){ vibrer(n >= 2 ? [200,80,200,80,200] : [150]); flashDegat(); secouerAtterrissage(); }   // dégât vaisseau : vibration courte, plus longue si plusieurs
   for(let i=0;i<n;i++){
     const r=d6(), el=TAB_C[r];
     recordOp('C','Dégât vaisseau',{dé:r},el,'');

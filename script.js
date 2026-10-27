@@ -813,7 +813,13 @@ function setShields(on){
   renderShip();
 }
 
+// Retour haptique (vibration) : sans effet si l'appareil ou le navigateur ne le gère pas
+function vibrer(motif){
+  try{ if(navigator.vibrate && state.hapticOn !== false) navigator.vibrate(motif); }catch(err){}
+}
+
 function hitShip(n){
+  if(n > 0) vibrer(n >= 2 ? [200,80,200,80,200] : [150]);   // dégât vaisseau : vibration courte, plus longue si plusieurs
   for(let i=0;i<n;i++){
     const r=d6(), el=TAB_C[r];
     recordOp('C','Dégât vaisseau',{dé:r},el,'');

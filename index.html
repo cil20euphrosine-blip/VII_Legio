@@ -84,7 +84,7 @@
         <p>Valeur 0 à 4 · score du tableau S · ne tient pas de container</p>
       </div>
       <select id="savant-select" onchange="setSavant(this.value)" style="width:auto;">
-        <option value="0">aucun</option>
+        <option value="0" hidden disabled>—</option>
         <option value="1">1</option>
         <option value="2">2</option>
         <option value="3">3</option>
@@ -334,6 +334,8 @@
           <span class="m-tab">TAB. E</span>
         </div>
         <button class="btn-primary" onclick="passerTourSurPlanete()" style="margin-top:15px;background:var(--dark-teal);">Passer un tour sur la planète</button>
+        <button class="btn-primary" onclick="rechercherSurPlace()" style="margin-top:8px;background:var(--dark-teal);">Rechercher les Extrasolaires (sur place)</button>
+        <button class="btn-primary" onclick="retenterAtterrissage()" style="margin-top:8px;background:var(--dark-teal);">Perdre un tour et retenter un atterrissage</button>
         <button id="btn-reembark" class="btn-primary" onclick="reembark()" style="display:none;margin-top:15px;background:var(--dark-teal);">Réembarquer les équipages</button>
         <button id="btn-orbit" class="btn-primary" onclick="endMission()" style="display:none;margin-top:15px;">Quitter l'orbite / décoller</button>
       </div>

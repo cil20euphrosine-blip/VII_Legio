@@ -2112,6 +2112,34 @@ function riposte(){
 
 
 // Passer un tour sur la planète : nouveau tour, tirage des arrivées successives (Règlement U.C. 3G b, S.C. 3G c)
+// Procédure 1 : recherche sur place (équipages débarqués).
+// Tirage de terrain (TAB P) puis tirage de présence de la race.
+function rechercherSurPlace(){
+  const p = state.currentPlanet;
+  if(!p || state.reembarked || state.landedTurns < 1)
+    return alert("Aucun équipage à terre : recherche impossible.");
+  log('OFFICIER COMMANDANT', "Mes équipages se déplacent sur la planète à la recherche des Extrasolaires.");
+  recordOp('Recherche', 'Recherche sur place', {}, '', '');
+  state.encounterRolled = false;      // nouvelle présence à tirer pour le nouveau site
+  state.landingZone = null;
+  rollZone();                          // terrain (TAB P)
+  setupPlanetEncounter();              // présence (tableau de la race)
+}
+
+// Procédure 2 : perdre un tour et retenter un atterrissage (la nouvelle attitude se choisit ensuite).
+function retenterAtterrissage(){
+  if(!state.currentPlanet || state.reembarked || state.landedTurns < 1)
+    return alert("Aucun atterrissage en cours.");
+  if(!confirm("Perdre un tour et retenter un atterrissage sur cette planète ?")) return;
+  log('OFFICIER COMMANDANT', "Je perds un tour et retente un atterrissage à la recherche d'un terrain plus favorable.");
+  state.encounterRolled = false;
+  state.landingZone = null;
+  state.currentAliens = 0;
+  passerTourSurPlanete();              // perd le tour (arrivées successives et médecin inclus)
+  state.encounterRolled = false;       // la présence sera retirée au prochain tirage de zone
+  alert("Choisissez à nouveau le comportement d'atterrissage (A, B, C ou D), puis lancez la zone (P).");
+}
+
 function passerTourSurPlanete(){
   if(!state.currentPlanet || state.reembarked || state.landedTurns < 1){
     return alert("Aucun équipage à terre : impossible de passer un tour sur la planète.");
@@ -2195,6 +2223,7 @@ function reembark(){
 
 function endMission(){
   if(state.currentPlanet) state.currentPlanet.done = true;
+  state.isInFlight = !(state.position.x===state.basePos.x && state.position.y===state.basePos.y && state.position.z===state.basePos.z);
   document.getElementById('landing-content').style.display = 'none';
   document.getElementById('no-landing').style.display = 'block';
   state.currentPlanet = null;
@@ -2622,7 +2651,8 @@ function syncScientistUI(){
   const avance = state.level === 'AVANCE';
   const card = document.getElementById('savant-card');
   const persRow = document.getElementById('pers-row');
-  if(card) card.style.display = avance ? 'block' : 'none';
+  const medecin = state.specialite === 'médecin';
+  if(card) card.style.display = (avance && !medecin) ? 'block' : 'none';
   if(persRow) persRow.style.display = avance ? 'flex' : 'none';
   const sel = document.getElementById('savant-select');
   if(sel) sel.value = String(state.savant || 0);

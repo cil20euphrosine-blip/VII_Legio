@@ -60,3 +60,20 @@ header.flash-degat { animation: flashDegat .9s ease-out; }
   20%  { box-shadow: inset 0 0 0 6px rgba(201,70,61,.9); background-color: #f5d9d5; }
   100% { box-shadow: inset 0 0 0 0 rgba(201,70,61,0); background-color: var(--head); }
 }
+
+/* Secousse de la page ATTERRIR lors d'un dégât (plus longue, avec davantage d'oscillations) */
+#tab-debarquer.shake-degat { animation: shakeDegat .9s ease-in-out; }
+@keyframes shakeDegat {
+  0%, 100% { transform: translateX(0); }
+  8%  { transform: translateX(-5px); }
+  16% { transform: translateX(5px); }
+  24% { transform: translateX(-5px); }
+  32% { transform: translateX(4px); }
+  40% { transform: translateX(-4px); }
+  48% { transform: translateX(4px); }
+  56% { transform: translateX(-3px); }
+  64% { transform: translateX(3px); }
+  72% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+  90% { transform: translateX(-1px); }
+}

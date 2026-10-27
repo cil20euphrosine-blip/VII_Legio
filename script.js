@@ -739,6 +739,12 @@ function assignWeapon(type,change){
   state.ship['mod_'+type]=v; renderShip();
 }
 
+// Vrai seulement si la position du vaisseau est celle de la planète-base
+function estALaBase(){
+  const p = state.position, b = state.basePos;
+  return !!p && !!b && p.x===b.x && p.y===b.y && p.z===b.z;
+}
+
 function renderShip(){
   const s=state.ship, c=cls();
   const h1 = document.querySelector('header h1');
@@ -786,7 +792,7 @@ function renderShip(){
     al.style.background='var(--accent-light)';
     st.innerText='Atterri';
     st.className='status-item active';
-  } else if(state.isInFlight){ 
+  } else if(state.isInFlight || !estALaBase()){ 
     al.innerHTML='<strong>Statut : En vol.</strong> La dotation est verrouillée.'; 
     al.style.background='#fce8e8'; 
     st.innerText='En vol'; 
@@ -815,7 +821,23 @@ function setShields(on){
 
 // Retour haptique (vibration) : sans effet si l'appareil ou le navigateur ne le gère pas
 function vibrer(motif){
-  try{ if(navigator.vibrate && state.hapticOn !== false) navigator.vibrate(motif); }catch(err){}
+  try{
+    if(!('vibrate' in navigator)){ addDebugLog('Vibration : API non disponible sur ce navigateur.'); return false; }
+    const ok = navigator.vibrate(motif);
+    if(!ok) addDebugLog('Vibration : refusée par le navigateur (pas de geste utilisateur ou appareil sans moteur).');
+    return ok;
+  }catch(err){ addDebugLog('Vibration : erreur ' + err); return false; }
+}
+
+// Bouton de test : indique si l'appareil et le navigateur acceptent la vibration
+function testerVibration(){
+  if(!('vibrate' in navigator)){
+    return alert("Ce navigateur ne gère pas la vibration (l'API navigator.vibrate est absente).");
+  }
+  const ok = navigator.vibrate([300, 150, 300]);
+  alert(ok
+    ? "Vibration envoyée. Si tu ne sens rien, vérifie les réglages Android : Sons et vibration, retour haptique et vibration au toucher, et désactive l'économiseur de batterie."
+    : "Le navigateur a refusé la vibration. Touche d'abord l'écran de l'appli, puis réessaie.");
 }
 
 function hitShip(n){
@@ -2652,7 +2674,9 @@ function syncScientistUI(){
   const card = document.getElementById('savant-card');
   const persRow = document.getElementById('pers-row');
   const medecin = state.specialite === 'médecin';
-  if(card) card.style.display = (avance && !medecin) ? 'block' : 'none';
+  if(card) card.style.display = avance ? 'block' : 'none';
+  const savRow = document.getElementById('savant-select') ? document.getElementById('savant-select').closest('.stat-row') : null;
+  if(savRow) savRow.style.display = (avance && !medecin) ? '' : 'none';
   if(persRow) persRow.style.display = avance ? 'flex' : 'none';
   const sel = document.getElementById('savant-select');
   if(sel) sel.value = String(state.savant || 0);

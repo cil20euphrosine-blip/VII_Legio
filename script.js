@@ -1072,6 +1072,7 @@ function executeRoute(){
         return;
       }
       if(p.z!==np.z) return;
+      if(p.done) return; // planète déjà quittée : elle ne peut plus être repérée ni rapporter de points
       const dx=p.x-np.x, dy=p.y-np.y, dist=Math.max(Math.abs(dx), Math.abs(dy));
       if(dist<=radar){
         if(!state.observablePlanets.includes(p.id)) state.observablePlanets.push(p.id);
@@ -1164,7 +1165,7 @@ function passTurn(){
   const radar = state.route.radarsActive;
   state.observablePlanets = [];
   state.planets.forEach(p => {
-    if(p.id === 0 || p.z !== state.position.z) return;
+    if(p.id === 0 || p.z !== state.position.z || p.done) return;
     const dx = p.x - state.position.x, dy = p.y - state.position.y, dist = Math.max(Math.abs(dx), Math.abs(dy));
     if(dist <= radar){
       if(!state.observablePlanets.includes(p.id)) state.observablePlanets.push(p.id);

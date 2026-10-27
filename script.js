@@ -840,8 +840,24 @@ function testerVibration(){
     : "Le navigateur a refusé la vibration. Touche d'abord l'écran de l'appli, puis réessaie.");
 }
 
+// Retour visuel : bref flash rouge de l'en-tête, synchronisé avec la vibration
+function flashDegat(){
+  const h = document.querySelector('header');
+  if(!h) return;
+  h.classList.remove('flash-degat');
+  void h.offsetWidth;            // relance l'animation
+  h.classList.add('flash-degat');
+  setTimeout(() => h.classList.remove('flash-degat'), 900);
+}
+
+// Test du retour (vibration + flash), accessible depuis CONTRÔLE
+function testerRetourDegat(){
+  vibrer([200, 100, 200]);
+  flashDegat();
+}
+
 function hitShip(n){
-  if(n > 0) vibrer(n >= 2 ? [200,80,200,80,200] : [150]);   // dégât vaisseau : vibration courte, plus longue si plusieurs
+  if(n > 0){ vibrer(n >= 2 ? [200,80,200,80,200] : [150]); flashDegat(); }   // dégât vaisseau : vibration courte, plus longue si plusieurs
   for(let i=0;i<n;i++){
     const r=d6(), el=TAB_C[r];
     recordOp('C','Dégât vaisseau',{dé:r},el,'');

@@ -36,7 +36,6 @@
     <div>
       <div class="points" id="display-points">0</div>
       <div class="promo-text">points · promotion à 6</div>
-      <button id="btn-passer-planete" class="btn-primary" style="display:none;margin-top:6px;padding:6px 10px;font-size:0.8rem;background:var(--dark-teal);color:#fff;border:1px solid var(--dark-teal);" onclick="passTurn()">Passer le tour</button>
     </div>
   </div>
   <div class="status-bar">
@@ -243,6 +242,7 @@
       </label>
       <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled>Transmettre au S.C.</button>
       <button class="btn-primary" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:10px;" onclick="resetRoute()">Effacer la route</button>
+      <button class="btn-primary" style="background:var(--dark-teal);margin-top:10px;" onclick="passTurn()">Passer le tour sur place (Demande d'info)</button>
 
     </div>
   </div>

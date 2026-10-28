@@ -94,15 +94,6 @@
       });
     }
 
-    // Bouton « Passer le tour » : visible seulement sur l'onglet PLANÈTES
-    const passBtn = document.getElementById('btn-passer-planete');
-    const majPasse = () => {
-      if(passBtn) passBtn.style.display = document.getElementById('tab-planetes')?.classList.contains('active') ? '' : 'none';
-    };
-    document.querySelectorAll('main').forEach(m =>
-      new MutationObserver(majPasse).observe(m, { attributes: true, attributeFilter: ['class'] }));
-    majPasse();
-
     // Affiche le pop-up sur VAISSEAU, ROUTE, PLANÈTES et ATTERRIR
     document.querySelectorAll('main').forEach(m =>
       new MutationObserver(refreshVisibility).observe(m, { attributes: true, attributeFilter: ['class'] }));

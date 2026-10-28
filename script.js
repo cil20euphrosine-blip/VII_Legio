@@ -1120,13 +1120,14 @@ function executeRoute(){
           p.discovered=true;
         }
 
-        if(!planetSightings[p.id] || dist < planetSightings[p.id].dist || (dist === planetSightings[p.id].dist && stepCount < planetSightings[p.id].step)){
-          let dirText = formatDirection(dx, dy);
-          planetSightings[p.id] = { step: stepCount, dist: dist, dir: dirText, isNew: isNew };
+        // Repérage « au plus près » : on retient le parsec où la distance réelle (euclidienne) est minimale
+        const euc = Math.hypot(dx, dy);
+        if(!planetSightings[p.id] || euc < planetSightings[p.id].euc - 1e-9 || (Math.abs(euc - planetSightings[p.id].euc) < 1e-9 && stepCount < planetSightings[p.id].step)){
+          planetSightings[p.id] = { step: stepCount, dist: dist, euc: euc, dir: formatDirection(dx, dy), isNew: isNew };
         }
 
-        if(!p.report||stepCount<p.report.step||(stepCount===p.report.step&&dist<p.report.dist)){
-          p.report={step:stepCount,dist:dist,dir:formatDirection(dx,dy)};
+        if(!p.report||euc < p.report.euc - 1e-9||(Math.abs(euc - p.report.euc) < 1e-9 && stepCount<p.report.step)){
+          p.report={step:stepCount,dist:dist,euc:euc,dir:formatDirection(dx,dy)};
         }
       }
     });

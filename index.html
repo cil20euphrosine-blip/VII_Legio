@@ -39,6 +39,7 @@
     </div>
   </div>
   <div class="status-bar">
+      <button class="status-item" id="btn-passer-planete" style="display:none;cursor:pointer;background:var(--dark-teal);color:#fff;border:1px solid var(--dark-teal);font-weight:bold;margin-left:auto;" onclick="passTurn()">Passer le tour</button>
     <div class="status-item" id="display-turn">Tour 1</div>
     <div class="status-item active" id="display-level">Niveau 1</div>
     <div class="status-item" id="display-status">À la Base</div>
@@ -242,7 +243,7 @@
       </label>
       <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled>Transmettre au S.C.</button>
       <button class="btn-primary" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:10px;" onclick="resetRoute()">Effacer la route</button>
-      <button class="btn-primary" style="background:var(--dark-teal);margin-top:10px;" onclick="passTurn()">Passer le tour sur place (Demande d'info)</button>
+
     </div>
   </div>
 </main>

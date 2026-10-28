@@ -819,27 +819,6 @@ function setShields(on){
   renderShip();
 }
 
-// Retour haptique (vibration) : sans effet si l'appareil ou le navigateur ne le gère pas
-function vibrer(motif){
-  try{
-    if(!('vibrate' in navigator)){ addDebugLog('Vibration : API non disponible sur ce navigateur.'); return false; }
-    const ok = navigator.vibrate(motif);
-    if(!ok) addDebugLog('Vibration : refusée par le navigateur (pas de geste utilisateur ou appareil sans moteur).');
-    return ok;
-  }catch(err){ addDebugLog('Vibration : erreur ' + err); return false; }
-}
-
-// Bouton de test : indique si l'appareil et le navigateur acceptent la vibration
-function testerVibration(){
-  if(!('vibrate' in navigator)){
-    return alert("Ce navigateur ne gère pas la vibration (l'API navigator.vibrate est absente).");
-  }
-  const ok = navigator.vibrate([300, 150, 300]);
-  alert(ok
-    ? "Vibration envoyée. Si tu ne sens rien, vérifie les réglages Android : Sons et vibration, retour haptique et vibration au toucher, et désactive l'économiseur de batterie."
-    : "Le navigateur a refusé la vibration. Touche d'abord l'écran de l'appli, puis réessaie.");
-}
-
 // Retour visuel : bref flash rouge de l'en-tête, synchronisé avec la vibration
 function flashDegat(){
   const h = document.querySelector('header');
@@ -850,25 +829,23 @@ function flashDegat(){
   setTimeout(() => h.classList.remove('flash-degat'), 900);
 }
 
-// Secousse de la page ATTERRIR seulement (en-tête et navigation restent fixes)
+// Secousse de tout l'écran (en-tête, pages et navigation) lors d'un dégât
 function secouerAtterrissage(){
-  const t = document.getElementById('tab-debarquer');
-  if(!t) return;
-  t.classList.remove('shake-degat');
-  void t.offsetWidth;
-  t.classList.add('shake-degat');
-  setTimeout(() => t.classList.remove('shake-degat'), 950);
+  const b = document.body;
+  b.classList.remove('shake-all');
+  void b.offsetWidth;
+  b.classList.add('shake-all');
+  setTimeout(() => b.classList.remove('shake-all'), 950);
 }
 
-// Test du retour (vibration + flash + secousse), accessible depuis CONTRÔLE
+// Test du retour visuel (flash + secousse), accessible depuis CONTRÔLE
 function testerRetourDegat(){
-  vibrer([200, 100, 200]);
   flashDegat();
   secouerAtterrissage();
 }
 
 function hitShip(n){
-  if(n > 0){ vibrer(n >= 2 ? [200,80,200,80,200] : [150]); flashDegat(); secouerAtterrissage(); }   // dégât vaisseau : vibration courte, plus longue si plusieurs
+  if(n > 0){ flashDegat(); secouerAtterrissage(); }   // dégât vaisseau : vibration courte, plus longue si plusieurs
   for(let i=0;i<n;i++){
     const r=d6(), el=TAB_C[r];
     recordOp('C','Dégât vaisseau',{dé:r},el,'');

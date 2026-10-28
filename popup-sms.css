@@ -61,15 +61,15 @@ header.flash-degat { animation: flashDegat .9s ease-out; }
   100% { box-shadow: inset 0 0 0 0 rgba(201,70,61,0); background-color: var(--head); }
 }
 
-/* Secousse de la page ATTERRIR lors d'un dégât (plus longue, avec davantage d'oscillations) */
-#tab-debarquer.shake-degat { animation: shakeDegat .9s ease-in-out; }
-@keyframes shakeDegat {
+/* Secousse de tout l'écran lors d'un dégât */
+body.shake-all { animation: shakeAll .9s ease-in-out; }
+@keyframes shakeAll {
   0%, 100% { transform: translateX(0); }
-  8%  { transform: translateX(-5px); }
-  16% { transform: translateX(5px); }
-  24% { transform: translateX(-5px); }
-  32% { transform: translateX(4px); }
-  40% { transform: translateX(-4px); }
+  8%  { transform: translateX(-6px); }
+  16% { transform: translateX(6px); }
+  24% { transform: translateX(-6px); }
+  32% { transform: translateX(5px); }
+  40% { transform: translateX(-5px); }
   48% { transform: translateX(4px); }
   56% { transform: translateX(-3px); }
   64% { transform: translateX(3px); }

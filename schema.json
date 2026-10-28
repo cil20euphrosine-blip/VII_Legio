@@ -2,26 +2,135 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Analyse de sessions Decurio Notius",
   "type": "object",
-  "required": ["schema_version", "application", "version", "date", "sessions"],
+  "required": [
+    "schema_version",
+    "application",
+    "version",
+    "date",
+    "sessions",
+    "bilan_par_onglet"
+  ],
   "properties": {
-    "schema_version": { "const": "1.0" },
-    "application": { "const": "Decurio Notius" },
-    "version": { "type": "string" },
-    "date": { "type": "string", "format": "date-time" },
+    "schema_version": {
+      "const": "1.0"
+    },
+    "application": {
+      "const": "Decurio Notius"
+    },
+    "version": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date-time"
+    },
     "sessions": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "debut", "fin", "statut", "flux_total"],
+        "required": [
+          "id",
+          "debut",
+          "fin",
+          "statut",
+          "flux_total",
+          "par_onglet"
+        ],
         "properties": {
-          "id": { "type": "integer", "minimum": 1 },
-          "debut": { "type": "string", "format": "date-time" },
-          "fin": { "type": ["string", "null"], "format": "date-time" },
-          "statut": { "enum": ["cloturee_par_le_joueur", "en_cours"] },
-          "flux_total": { "type": "integer", "minimum": 0 }
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "debut": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fin": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "statut": {
+            "enum": [
+              "cloturee_par_le_joueur",
+              "en_cours"
+            ]
+          },
+          "flux_total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "par_onglet": {
+            "type": "object",
+            "required": [
+              "Vaisseau",
+              "Route",
+              "Planètes",
+              "Atterrir",
+              "Autre"
+            ],
+            "properties": {
+              "Vaisseau": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "Route": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "Planètes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "Atterrir": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "Autre": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
         },
         "additionalProperties": false
       }
+    },
+    "bilan_par_onglet": {
+      "type": "object",
+      "required": [
+        "Vaisseau",
+        "Route",
+        "Planètes",
+        "Atterrir",
+        "Autre"
+      ],
+      "properties": {
+        "Vaisseau": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "Route": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "Planètes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "Atterrir": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "Autre": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

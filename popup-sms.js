@@ -1,9 +1,10 @@
-/* Fil S.C. / UC : affiche le journal de bord en bulles (pop-up sur VAISSEAU et PLANÈTES, tiroir sur ROUTE et ATTERRIR).
+/* Fil S.C. / UC (option C) : bulle flottante sur ROUTE et ATTERRIR, qui ouvre une feuille avec le fil de communication.
    Alimenté par log() dans script.js : PopupSMS.add(sender, text). */
 (function () {
   const PopupSMS = {};
-  let thread, panel, toggle;
+  const SHOW_ON = ['route', 'debarquer'];
   const threads = [];
+  let unread = 0, fab, badge, sheet, thread;
 
   function time() {
     return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -15,7 +16,7 @@
     row.className = 'popup-sms-row ' + (isSC ? 'sc' : 'uc');
     const who = document.createElement('div');
     who.className = 'popup-sms-who';
-    who.textContent = isSC ? 'SPACE COMPUTER' : 'OFFICIER COMMANDANT';
+    who.textContent = isSC ? 'S.C.' : 'UC';
     const bubble = document.createElement('div');
     bubble.className = 'popup-sms-bubble';
     bubble.innerHTML = text; // même source que le journal (contenu du jeu)
@@ -27,70 +28,72 @@
   }
 
   PopupSMS.add = function (sender, text) {
-    threads.forEach(th => {
-      th.prepend(makeRow(sender, text)); // plus récent en haut, comme le journal de bord
-      th.scrollTop = 0;
-    });
+    threads.forEach(th => { th.prepend(makeRow(sender, text)); th.scrollTop = 0; });
+    if (!sheet.classList.contains('open')) { unread++; updateBadge(); }
   };
 
-  // Onglets où le bouton Messages et le fil sont accessibles
-  const SHOW_ON = ['tab-vaisseau', 'tab-planetes'];
-  function isAllowedTabActive() {
-    return SHOW_ON.some(id => {
-      const tab = document.getElementById(id);
-      return !!tab && tab.classList.contains('active');
-    });
+  function updateBadge() {
+    badge.textContent = unread;
+    badge.style.display = unread ? '' : 'none';
   }
 
-  // Zone de défilement validée : démarre à 36 % de la hauteur de l'écran,
-  // s'arrête à 68 px au-dessus de la barre de navigation.
-  const TOP_RATIO = 0.36;
-  const GAP_ABOVE_NAV = 68;
+  function activeTabId() {
+    const m = document.querySelector('main.active');
+    return m ? m.id.replace('tab-', '') : '';
+  }
+
+  function openSheet() { sheet.classList.add('open'); unread = 0; updateBadge(); }
+  function closeSheet() { sheet.classList.remove('open'); }
+  function toggleSheet() { sheet.classList.contains('open') ? closeSheet() : openSheet(); }
+
+  function majBarPasser() {
+    const b = document.getElementById('bar-passer');
+    if (b) b.style.display = activeTabId() === 'planetes' ? '' : 'none';
+  }
+
+  function refresh() {
+    const onTab = SHOW_ON.includes(activeTabId());
+    fab.style.display = onTab ? '' : 'none';
+    if (!onTab) closeSheet();
+    majBarPasser();
+  }
+
   function layout() {
-    if (!panel) return;
     const nav = document.querySelector('nav');
-    panel.style.top = Math.round(window.innerHeight * TOP_RATIO) + 'px';
-    if (nav) {
-      const navTop = nav.getBoundingClientRect().top;
-      panel.style.bottom = Math.max(0, window.innerHeight - (navTop - GAP_ABOVE_NAV)) + 'px';
-    }
-  }
-
-  function togglePanel() {
-    const hidden = panel.dataset.userHidden ? false : true;
-    if (hidden) panel.dataset.userHidden = '1'; else delete panel.dataset.userHidden;
-    toggle.classList.toggle('off', hidden);
-    toggle.setAttribute('aria-expanded', String(!hidden));
-    refreshVisibility();
-  }
-
-  function refreshVisibility() {
-    if (!panel) return;
-    layout();
-    const allowed = isAllowedTabActive();
-    const show = allowed && !panel.dataset.userHidden;
-    panel.classList.toggle('hidden', !show);
-    toggle.style.display = allowed ? '' : 'none';
+    if (nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
   }
 
   function build() {
-    toggle = document.createElement('button');
-    toggle.id = 'popup-sms-toggle';
-    toggle.className = 'status-item popup-sms-chip';
-    toggle.textContent = 'Messages';
-    toggle.setAttribute('aria-expanded', 'true');
-    panel = document.createElement('div');
-    panel.id = 'popup-sms';
-    thread = document.createElement('div');
-    thread.className = 'thread';
-    panel.appendChild(thread);
-    threads.push(thread);
-    document.querySelectorAll('.fil-thread').forEach(th => threads.push(th));
-    const bar = document.querySelector('.status-bar');
-    (bar || document.body).appendChild(toggle);
-    document.body.appendChild(panel);
+    fab = document.createElement('button');
+    fab.id = 'fil-fab';
+    fab.type = 'button';
+    fab.setAttribute('aria-label', 'Ouvrir le fil S.C. / UC');
+    fab.textContent = 'Fil';
+    badge = document.createElement('span');
+    badge.className = 'fil-badge';
+    badge.style.display = 'none';
+    fab.appendChild(badge);
+    fab.addEventListener('click', toggleSheet);
 
-    toggle.addEventListener('click', togglePanel);
+    sheet = document.createElement('div');
+    sheet.id = 'fil-sheet';
+    const head = document.createElement('div');
+    head.className = 'fil-sheet-head';
+    const title = document.createElement('span');
+    title.textContent = 'Fil S.C. / UC';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'fil-close';
+    close.setAttribute('aria-label', 'Fermer le fil');
+    close.textContent = '×';
+    close.addEventListener('click', closeSheet);
+    head.append(title, close);
+    thread = document.createElement('div');
+    thread.className = 'thread fil-thread-sheet';
+    sheet.append(head, thread);
+    threads.push(thread);
+
+    document.body.append(fab, sheet);
 
     // Reprend les messages déjà présents dans le journal (le plus ancien d'abord)
     const log = document.getElementById('log-container');
@@ -100,22 +103,14 @@
         const body = entry.children[1];
         if (sender && body) PopupSMS.add(sender.textContent, body.innerHTML);
       });
+      unread = 0; updateBadge();
     }
 
-    // Barre « Passer le tour » : visible seulement sur l'onglet PLANÈTES
-    const barPasser = document.getElementById('bar-passer');
-    const majBar = () => {
-      if(barPasser) barPasser.style.display = document.getElementById('tab-planetes')?.classList.contains('active') ? '' : 'none';
-    };
     document.querySelectorAll('main').forEach(m =>
-      new MutationObserver(majBar).observe(m, { attributes: true, attributeFilter: ['class'] }));
-    majBar();
-
-    // Affiche le pop-up sur VAISSEAU et PLANÈTES ; ROUTE et ATTERRIR ont leur propre tiroir
-    document.querySelectorAll('main').forEach(m =>
-      new MutationObserver(refreshVisibility).observe(m, { attributes: true, attributeFilter: ['class'] }));
-    refreshVisibility();
+      new MutationObserver(refresh).observe(m, { attributes: true, attributeFilter: ['class'] }));
+    layout();
     window.addEventListener('resize', layout);
+    refresh();
   }
 
   document.addEventListener('DOMContentLoaded', build);

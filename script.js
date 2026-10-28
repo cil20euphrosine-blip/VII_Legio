@@ -2481,6 +2481,7 @@ function loadNotiusScenario(){
     {id:3,x:10,y:-4,z:1,type:'A · Tellus',infoLevel:0,discovered:false,report:null,done:false}
   ];
   state.risks=null; state.debugLogs=[]; state.travelHistory=[]; opLog=[];
+  analyse={ actif:false, debut:null, indexDebut:0, sessions:[] };
   addDebugLog('--- SCÉNARIO NOTIUS ---');
   document.getElementById('log-container').innerHTML='';
   document.getElementById('landing-content').style.display='none';
@@ -2580,7 +2581,57 @@ function runChecks(){
   return res;
 }
 
+// ==========================================
+// ANALYSE DE SESSION (flux S.C. / UC)
+// Démarrage et arrêt à la base, à l'initiative du joueur.
+// Le flux total = nombre d'opérations enregistrées pendant la session.
+// ==========================================
+let analyse = { actif:false, debut:null, indexDebut:0, sessions:[] };
+const ANALYSE_SCHEMA_VERSION = '1.0';
+
+function fluxCourant(){ return Math.max(0, opLog.length - analyse.indexDebut); }
+
+function basculerAnalyse(){
+  if(!estALaBase()){
+    alert(analyse.actif ? "L'analyse ne peut être arrêtée qu'au retour à la base." : "L'analyse ne peut être démarrée qu'à la base.");
+    return;
+  }
+  if(!analyse.actif){
+    analyse.actif=true; analyse.debut=new Date().toISOString(); analyse.indexDebut=opLog.length;
+    addDebugLog('Analyse de session démarrée.');
+  } else {
+    analyse.sessions.push({ id: analyse.sessions.length+1, debut: analyse.debut, fin: new Date().toISOString(), statut:'cloturee_par_le_joueur', flux_total: fluxCourant() });
+    analyse.actif=false; analyse.debut=null; analyse.indexDebut=0;
+    addDebugLog('Analyse de session arrêtée.');
+  }
+  renderAnalyse();
+  autosaveNow();
+}
+
+function renderAnalyse(){
+  const st=document.getElementById('analyse-statut'), bt=document.getElementById('btn-analyse');
+  if(!st||!bt) return;
+  if(analyse.actif){
+    st.textContent='Analyse en cours : '+fluxCourant()+' échange(s). Arrêt au retour à la base.';
+    bt.textContent="Arrêter l'analyse";
+  } else {
+    st.textContent = analyse.sessions.length
+      ? analyse.sessions.length+' session(s) enregistrée(s). Démarrage possible à la base.'
+      : 'Aucune analyse en cours. Démarrage possible à la base.';
+    bt.textContent="Démarrer l'analyse";
+  }
+}
+
+function exporterAnalyse(){
+  const sessions=analyse.sessions.slice();
+  if(analyse.actif) sessions.push({ id: sessions.length+1, debut: analyse.debut, fin: null, statut:'en_cours', flux_total: fluxCourant() });
+  const doc={ schema_version: ANALYSE_SCHEMA_VERSION, application:'Decurio Notius', version: APP_VERSION, date: new Date().toISOString(), sessions: sessions };
+  const blob=new Blob([JSON.stringify(doc,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='legio_analyse_sessions.json'; a.click();
+}
+
 function renderControle(){
+  renderAnalyse();
   [1,2,3,4].forEach(z=>{ const b=document.getElementById('lv-'+z); if(b) b.style.background = z===controleLevel?'var(--accent-light)':''; });
   renderMapSvg();
 }
@@ -2805,7 +2856,7 @@ function autosaveNow(){
   try{
     const sections = {};
     for(const nom of Object.keys(SAVE_SECTIONS)) sections[nom] = capturerSection(nom);
-    const donnees = { app: 'Decurio Notius', version: APP_VERSION, date: new Date().toISOString(), sections, opLog };
+    const donnees = { app: 'Decurio Notius', version: APP_VERSION, date: new Date().toISOString(), sections, opLog, analyse };
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(donnees));
     // premier enregistrement d'un nouveau tour = instantané de début de tour
     const hist = lireHistoriqueTours();
@@ -2833,6 +2884,8 @@ function ecrireHistoriqueTours(hist){
 function appliquerDonnees(d){
   for(const nom of Object.keys(SAVE_SECTIONS)) if(d.sections[nom] !== undefined) appliquerSection(nom, d.sections[nom]);
   if(Array.isArray(d.opLog)) opLog = d.opLog;
+  if(d.analyse) analyse = d.analyse;
+  renderAnalyse();
   rafraichirApresRestauration();
   renderPlanets();
 }

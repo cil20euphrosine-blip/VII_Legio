@@ -379,6 +379,12 @@
     </div>
   </div>
   <div class="card">
+    <h2>Analyse de session</h2>
+    <p id="analyse-statut" style="font-size:13px;color:var(--text-muted);"></p>
+    <button id="btn-analyse" class="btn-primary" style="margin-top:10px;" onclick="basculerAnalyse()">Démarrer l'analyse</button>
+    <button class="btn-secondary" style="margin-top:10px;" onclick="exporterAnalyse()">Exporter les sessions (JSON)</button>
+  </div>
+  <div class="card">
     <h2>Export du journal</h2>
     <button class="btn-secondary" style="margin-top:10px;" onclick="exportOpLog()">Exporter le journal (JSON)</button>
   </div>

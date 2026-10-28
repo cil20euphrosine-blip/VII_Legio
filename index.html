@@ -242,7 +242,6 @@
       </label>
       <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled>Transmettre au S.C.</button>
       <button class="btn-primary" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:10px;" onclick="resetRoute()">Effacer la route</button>
-      <button class="btn-primary" style="background:var(--dark-teal);margin-top:10px;" onclick="passTurn()">Passer le tour sur place (Demande d'info)</button>
 
     </div>
   </div>
@@ -418,7 +417,10 @@
 </main>
 
 <!-- Barre de navigation complète avec les 7 onglets ajustés pour tenir sur l'écran -->
-<nav>
+<div id="bar-passer" style="display:none;">
+    <button onclick="passTurn()">Passer le tour sur place (Demande d'info)</button>
+  </div>
+  <nav>
   <button onclick="switchTab('vaisseau')" id="nav-vaisseau"><span class="icon">⛵</span>Vaisseau</button>
   <button onclick="switchTab('route')" id="nav-route"><span class="icon">◎</span>Route</button>
   <button onclick="switchTab('planetes')" id="nav-planetes"><span class="icon">🪐</span>Planètes</button>

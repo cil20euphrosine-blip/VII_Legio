@@ -77,3 +77,16 @@ header.flash-degat { animation: flashDegat .9s ease-out; }
   80% { transform: translateX(2px); }
   90% { transform: translateX(-1px); }
 }
+
+/* Barre « Passer le tour » fixe au-dessus de la navigation (onglet PLANÈTES seulement) */
+#bar-passer {
+  position: fixed; left: 0; right: 0; z-index: 850;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 12px; background: #fffdf7; border-top: 1px solid #b08a4a;
+}
+#bar-passer button {
+  width: 100%; margin: 0; padding: 10px; min-height: 0;
+  background: var(--dark-teal); color: #fff; border: none; border-radius: 6px;
+  font-weight: bold; font-size: .9rem;
+}
+#tab-planetes { padding-bottom: 96px; }

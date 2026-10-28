@@ -94,6 +94,15 @@
       });
     }
 
+    // Barre « Passer le tour » : visible seulement sur l'onglet PLANÈTES
+    const barPasser = document.getElementById('bar-passer');
+    const majBar = () => {
+      if(barPasser) barPasser.style.display = document.getElementById('tab-planetes')?.classList.contains('active') ? '' : 'none';
+    };
+    document.querySelectorAll('main').forEach(m =>
+      new MutationObserver(majBar).observe(m, { attributes: true, attributeFilter: ['class'] }));
+    majBar();
+
     // Affiche le pop-up sur VAISSEAU, ROUTE, PLANÈTES et ATTERRIR
     document.querySelectorAll('main').forEach(m =>
       new MutationObserver(refreshVisibility).observe(m, { attributes: true, attributeFilter: ['class'] }));

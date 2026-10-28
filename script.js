@@ -706,14 +706,14 @@ function setLevel(v){
 }
 
 function setPersonality(v){
-  if(state.turn>1){ alert('La personnalité est fixée au début du voyage.'); return; }
+  if(state.turn>1 || !peutModifierFiche()){ alert('La personnalité est fixée au début du voyage.'); return; }
   state.personality=parseInt(v,10);
 }
 
 function shipDefence(){ return state.shieldsOn ? state.ship.shields*5 : 2; }
 
 function updateShip(item,change){
-  if(state.isInFlight) return alert("En vol, l'équipement du vaisseau est verrouillé. Retournez à la base pour le modifier.");
+  if(!peutModifierFiche()) return alert(MSG_VERROU);
   const v=state.ship[item]+change;
   if(v<0) return;
   if(item==='crew' && v<cls().eqMin) return;
@@ -731,13 +731,19 @@ function updateShip(item,change){
 }
 
 function assignWeapon(type,change){
-  if(state.isInFlight) return;
+  if(!peutModifierFiche()){ alert(MSG_VERROU); return; }
   const a=state.ship.mod_zip3+state.ship.mod_ho12+state.ship.mod_sil4;
   const v=state.ship['mod_'+type]+change;
   if(v<0) return;
   if(change>0 && a>=state.ship.modules) return alert('Tous les modules sont déjà équipés.');
   state.ship['mod_'+type]=v; renderShip();
 }
+
+// Seule règle de verrouillage : la fiche (équipement, officier) ne se modifie qu'à la base
+function peutModifierFiche(){
+  return estALaBase() && !state.isInFlight && !state.currentPlanet;
+}
+const MSG_VERROU = "Vaisseau hors base : l'équipement et l'officier sont verrouillés. Retournez à la planète-base pour les modifier.";
 
 // Vrai seulement si la position du vaisseau est celle de la planète-base
 function estALaBase(){
@@ -2616,7 +2622,7 @@ function renderMapSvg(){
 }
 
 function setSavant(v){
-  if(state.isInFlight){ alert('En vol, le spécialiste ne peut pas être changé.'); document.getElementById('savant-select').value=state.savant; return; }
+  if(!peutModifierFiche()){ alert(MSG_VERROU); document.getElementById('savant-select').value=state.savant; return; }
   state.savant=parseInt(v,10)||0;
   addDebugLog('Officier savant : '+(state.savant||'aucun'));
 }
@@ -2708,7 +2714,7 @@ function syncScientistUI(){
 }
 
 function setSpecialite(v){
-  if(state.isInFlight){ alert("En vol, la spécialité de l'officier ne peut pas être changée."); document.getElementById('specialite-select').value = state.specialite || ''; return; }
+  if(!peutModifierFiche()){ alert(MSG_VERROU); document.getElementById('specialite-select').value = state.specialite || ''; return; }
   state.specialite = (v && SPECIALITES[v]) ? v : '';
   syncScientistUI();
   addDebugLog('Spécialité de l\'officier : ' + (state.specialite ? SPECIALITES[state.specialite].label : 'non définie'));

@@ -830,24 +830,33 @@ function flashDegat(){
 }
 
 // Secousse de tout l'écran (en-tête, pages et navigation) lors d'un dégât
-function secouerAtterrissage(){
+// Durée de la secousse selon le type de dégât (en millisecondes)
+const DUREE_SECOUSSE = { coque: 1100, las: 900, bou: 900, res: 900, rad: 700, com: 700 };
+
+function secouerAtterrissage(ms = 950){
   const b = document.body;
-  b.classList.remove('shake-all');
+  b.style.animation = 'none';
   void b.offsetWidth;
-  b.classList.add('shake-all');
-  setTimeout(() => b.classList.remove('shake-all'), 950);
+  b.style.animation = `shakeAll ${ms/1000}s ease-in-out`;
+  clearTimeout(b._secoueTimer);
+  b._secoueTimer = setTimeout(() => { b.style.animation = ''; }, ms + 50);
 }
 
 // Test du retour visuel (flash + secousse), accessible depuis CONTRÔLE
 function testerRetourDegat(){
-  flashDegat();
-  secouerAtterrissage();
+  // Enchaîne les secousses par type de dégât : coque, radars, boucliers, lasers
+  const types = ['coque', 'rad', 'bou', 'las'];
+  types.forEach((t, i) => setTimeout(() => {
+    flashDegat();
+    secouerAtterrissage(DUREE_SECOUSSE[t] || 900);
+  }, i * 1500));
 }
 
 function hitShip(n){
-  if(n > 0){ flashDegat(); secouerAtterrissage(); }   // dégât vaisseau : vibration courte, plus longue si plusieurs
+  if(n > 0) flashDegat();
   for(let i=0;i<n;i++){
     const r=d6(), el=TAB_C[r];
+    secouerAtterrissage(DUREE_SECOUSSE[el] || 900);   // secousse selon le type de dégât
     recordOp('C','Dégât vaisseau',{dé:r},el,'');
     addDebugLog(`Tableau C : dé ${r} → ${el}`);
     if(el==='coque'){

@@ -90,3 +90,9 @@ body.shake-all { animation: shakeAll .9s ease-in-out; }
   font-weight: bold; font-size: .9rem;
 }
 #tab-planetes { padding-bottom: 96px; }
+
+.fil-drawer { position: sticky; bottom: 60px; margin-top: 12px; background: #fff; border-top: 2px solid var(--accent); z-index: 5; }
+.fil-grip { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; background: none; border: none; font-size: .85rem; color: var(--text-muted); cursor: pointer; }
+.fil-grip i { width: 36px; height: 4px; background: #c9c3b0; border-radius: 2px; display: inline-block; }
+.fil-thread { display: none; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; padding: 4px 12px 10px; }
+.fil-drawer.open .fil-thread { display: flex; }

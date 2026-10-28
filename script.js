@@ -1163,7 +1163,7 @@ function executeRoute(){
   }
   state.position={x:finalPos.x,y:finalPos.y,z:finalPos.z};
   document.getElementById('display-level').innerText=`Niveau ${state.position.z}`;
-  recordOp('Route','Déplacement de '+maxSteps+' parsec(s)',{route:routeStr,radars:radar},'arrivée X'+finalPos.x+' Y'+finalPos.y+' N'+finalPos.z,'');
+  recordOp('Route', maxSteps>0 ? 'Déplacement de '+maxSteps+' parsec(s)' : 'Déplacement interrompu (0 parsec)',{route:routeStr,radars:radar},'arrivée X'+finalPos.x+' Y'+finalPos.y+' N'+finalPos.z,'');
   state.turn++; document.getElementById('display-turn').innerText=`Tour ${state.turn}`;
 
   setTimeout(()=>{
@@ -1200,6 +1200,7 @@ function executeRoute(){
 // FONCTION POUR PASSER UN TOUR (DEMANDE D'INFO)
 // ==========================================
 function passTurn(){
+  recordOp('Demande d\'info','Passage de tour sur place (demande d\'info)',{},'','');
   state.computersUsedThisTurn=0;
   state.turn++;
   document.getElementById('display-turn').innerText=`Tour ${state.turn}`;
@@ -1301,6 +1302,8 @@ function renderPlanets(){
 // tant que le vaisseau n'a pas atterri dessus (l'atterrissage réinitialise le compteur).
 const DNS_LIMITE = 2;
 function requestInfo(id){
+  const p0=state.planets.find(x=>x.id===id);
+  recordOp('Info','Demande d\'information, planète #'+id,{niveau:(p0?p0.infoLevel:0)+1},'','');
   if(state.computersUsedThisTurn>=state.ship.computers) return;
   const p=state.planets.find(x=>x.id===id);
   if(p.infoLevel>=6) return;
@@ -1585,6 +1588,7 @@ function disembark(){
   const toLand = Math.min(disembarkCount, state.ship.crew);
   
   state.ship.crew -= toLand;
+  recordOp('Débarquement','Débarquement de '+toLand+' équipage(s)',{équipages:toLand},'ok','');
   for(let i = 0; i < toLand; i++) ajouterEquipage();
   state.landedTurns = Math.max(1, state.landedTurns);
   
@@ -2190,6 +2194,7 @@ function retenterAtterrissage(){
 }
 
 function passerTourSurPlanete(){
+  recordOp('Passage de tour','Passage de tour sur la planète',{},'','');
   if(!state.currentPlanet || state.reembarked || !equipagesATerre()){
     return alert("Aucun équipage à terre : impossible de passer un tour sur la planète.");
   }
@@ -2216,6 +2221,7 @@ function reembark(){
   if(state.shieldsOn) return alert('Boucliers activés : réembarquement impossible.');
   state.hasGroundCrew = state.menGround > 0;
   if(!state.hasGroundCrew) return alert('Plus aucun homme à terre à réembarquer.');
+  recordOp('Réembarquement','Réembarquement',{hommes:state.menGround},'ok','');
   
   log('OFFICIER COMMANDANT','J\'ordonne le réembarquement.');
   const ch = state.currentPlanet ? state.currentPlanet.chain : null;
@@ -2591,6 +2597,21 @@ const ANALYSE_SCHEMA_VERSION = '1.0';
 
 function fluxCourant(){ return Math.max(0, opLog.length - analyse.indexDebut); }
 
+const ONGLETS_ANALYSE = ['Vaisseau','Route','Planètes','Atterrir','Autre'];
+function ongletDe(table){
+  if(['Route','Risque'].includes(table)) return 'Route';
+  if(['Info','Découverte','Demande d\'info'].includes(table)) return 'Planètes';
+  if(['O','P','Désertion','Débarquement','Réembarquement','Recherche','Passage de tour','Arrivées'].includes(table)) return 'Atterrir';
+  if(table==='C') return 'Vaisseau';
+  if(['A','B','D','E','F','G','H','I','L','S','ROTSA','Duel','Nature','Points'].includes(table)) return 'Atterrir';
+  return 'Autre';
+}
+function compterParOnglet(ops){
+  const r={}; ONGLETS_ANALYSE.forEach(k=>r[k]=0);
+  ops.forEach(o=>{ r[ongletDe(o.table)]++; });
+  return r;
+}
+
 function basculerAnalyse(){
   if(!estALaBase()){
     alert(analyse.actif ? "L'analyse ne peut être arrêtée qu'au retour à la base." : "L'analyse ne peut être démarrée qu'à la base.");
@@ -2600,7 +2621,7 @@ function basculerAnalyse(){
     analyse.actif=true; analyse.debut=new Date().toISOString(); analyse.indexDebut=opLog.length;
     addDebugLog('Analyse de session démarrée.');
   } else {
-    analyse.sessions.push({ id: analyse.sessions.length+1, debut: analyse.debut, fin: new Date().toISOString(), statut:'cloturee_par_le_joueur', flux_total: fluxCourant() });
+    analyse.sessions.push({ id: analyse.sessions.length+1, debut: analyse.debut, fin: new Date().toISOString(), statut:'cloturee_par_le_joueur', flux_total: fluxCourant(), par_onglet: compterParOnglet(opLog.slice(analyse.indexDebut)) });
     analyse.actif=false; analyse.debut=null; analyse.indexDebut=0;
     addDebugLog('Analyse de session arrêtée.');
   }
@@ -2622,10 +2643,16 @@ function renderAnalyse(){
   }
 }
 
-function exporterAnalyse(){
+function construireExportAnalyse(){
   const sessions=analyse.sessions.slice();
-  if(analyse.actif) sessions.push({ id: sessions.length+1, debut: analyse.debut, fin: null, statut:'en_cours', flux_total: fluxCourant() });
-  const doc={ schema_version: ANALYSE_SCHEMA_VERSION, application:'Decurio Notius', version: APP_VERSION, date: new Date().toISOString(), sessions: sessions };
+  if(analyse.actif) sessions.push({ id: sessions.length+1, debut: analyse.debut, fin: null, statut:'en_cours', flux_total: fluxCourant(), par_onglet: compterParOnglet(opLog.slice(analyse.indexDebut)) });
+  const bilan_par_onglet = compterParOnglet([]);
+  sessions.forEach(se=>ONGLETS_ANALYSE.forEach(k=>bilan_par_onglet[k]+=(se.par_onglet?se.par_onglet[k]:0)));
+  return { schema_version: ANALYSE_SCHEMA_VERSION, application:'Decurio Notius', version: APP_VERSION, date: new Date().toISOString(), sessions: sessions, bilan_par_onglet: bilan_par_onglet };
+}
+
+function exporterAnalyse(){
+  const doc=construireExportAnalyse();
   const blob=new Blob([JSON.stringify(doc,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='legio_analyse_sessions.json'; a.click();
 }

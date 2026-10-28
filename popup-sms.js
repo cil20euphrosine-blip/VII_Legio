@@ -1,15 +1,15 @@
-/* Pop-up SMS : affiche le journal de bord en bulles sur l'onglet ATTERRIR.
+/* Fil S.C. / UC : affiche le journal de bord en bulles (pop-up sur VAISSEAU et PLANÈTES, tiroir sur ROUTE et ATTERRIR).
    Alimenté par log() dans script.js : PopupSMS.add(sender, text). */
 (function () {
   const PopupSMS = {};
   let thread, panel, toggle;
+  const threads = [];
 
   function time() {
     return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  PopupSMS.add = function (sender, text) {
-    if (!thread) return;
+  function makeRow(sender, text) {
     const isSC = sender === 'SPACE COMPUTER';
     const row = document.createElement('div');
     row.className = 'popup-sms-row ' + (isSC ? 'sc' : 'uc');
@@ -23,12 +23,18 @@
     t.style.cssText = 'font-size:.6rem;color:var(--pop-time);margin:3px 4px 0;';
     t.textContent = time();
     row.append(who, bubble, t);
-    thread.prepend(row); // plus récent en haut, comme le journal de bord
-    thread.scrollTop = 0;
+    return row;
+  }
+
+  PopupSMS.add = function (sender, text) {
+    threads.forEach(th => {
+      th.prepend(makeRow(sender, text)); // plus récent en haut, comme le journal de bord
+      th.scrollTop = 0;
+    });
   };
 
   // Onglets où le bouton Messages et le fil sont accessibles
-  const SHOW_ON = ['tab-vaisseau', 'tab-route', 'tab-planetes', 'tab-debarquer'];
+  const SHOW_ON = ['tab-vaisseau', 'tab-planetes'];
   function isAllowedTabActive() {
     return SHOW_ON.some(id => {
       const tab = document.getElementById(id);
@@ -78,6 +84,8 @@
     thread = document.createElement('div');
     thread.className = 'thread';
     panel.appendChild(thread);
+    threads.push(thread);
+    document.querySelectorAll('.fil-thread').forEach(th => threads.push(th));
     const bar = document.querySelector('.status-bar');
     (bar || document.body).appendChild(toggle);
     document.body.appendChild(panel);
@@ -103,7 +111,7 @@
       new MutationObserver(majBar).observe(m, { attributes: true, attributeFilter: ['class'] }));
     majBar();
 
-    // Affiche le pop-up sur VAISSEAU, ROUTE, PLANÈTES et ATTERRIR
+    // Affiche le pop-up sur VAISSEAU et PLANÈTES ; ROUTE et ATTERRIR ont leur propre tiroir
     document.querySelectorAll('main').forEach(m =>
       new MutationObserver(refreshVisibility).observe(m, { attributes: true, attributeFilter: ['class'] }));
     refreshVisibility();

@@ -2150,11 +2150,16 @@ function riposte(){
 
 
 // Passer un tour sur la planète : nouveau tour, tirage des arrivées successives (Règlement U.C. 3G b, S.C. 3G c)
+// Vrai s'il reste au moins un homme à terre (même critère que l'affichage des équipages)
+function equipagesATerre(){
+  return (state.groundCrews || []).some(c => c.v > 0);
+}
+
 // Procédure 1 : recherche sur place (équipages débarqués).
 // Tirage de terrain (TAB P) puis tirage de présence de la race.
 function rechercherSurPlace(){
   const p = state.currentPlanet;
-  if(!p || state.reembarked || state.landedTurns < 1)
+  if(!p || state.reembarked || !equipagesATerre())
     return alert("Aucun équipage à terre : recherche impossible.");
   log('OFFICIER COMMANDANT', "Mes équipages se déplacent sur la planète à la recherche des Extrasolaires.");
   recordOp('Recherche', 'Recherche sur place', {}, '', '');
@@ -2166,7 +2171,7 @@ function rechercherSurPlace(){
 
 // Procédure 2 : perdre un tour et retenter un atterrissage (la nouvelle attitude se choisit ensuite).
 function retenterAtterrissage(){
-  if(!state.currentPlanet || state.reembarked || state.landedTurns < 1)
+  if(!state.currentPlanet || state.reembarked || !equipagesATerre())
     return alert("Aucun atterrissage en cours.");
   if(!confirm("Perdre un tour et retenter un atterrissage sur cette planète ?")) return;
   log('OFFICIER COMMANDANT', "Je perds un tour et retente un atterrissage à la recherche d'un terrain plus favorable.");
@@ -2179,7 +2184,7 @@ function retenterAtterrissage(){
 }
 
 function passerTourSurPlanete(){
-  if(!state.currentPlanet || state.reembarked || state.landedTurns < 1){
+  if(!state.currentPlanet || state.reembarked || !equipagesATerre()){
     return alert("Aucun équipage à terre : impossible de passer un tour sur la planète.");
   }
   state.turn++;

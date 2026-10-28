@@ -1034,6 +1034,10 @@ function distortionRelocate(from){
 
 function executeRoute(){
   if(state.route.segments.length===0) return;
+  if(state.currentPlanet){
+    alert("Vous êtes posé sur une planète : le vaisseau doit décoller avant de faire route.");
+    return;
+  }
   state.shieldsLocked=true; state.hullHitsThisTurn=0;
   state.isInFlight=true; renderShip();
   const isLanding=document.getElementById('check-landing').checked;
@@ -1189,6 +1193,7 @@ function executeRoute(){
     }
     if(!routeInterrompue && state.position.x===state.basePos.x && state.position.y===state.basePos.y && state.position.z===state.basePos.z){
       state.isInFlight=false;
+      state.currentPlanet=null; state.groundCrews=[]; state.menGround=0; state.hasGroundCrew=false; state.crewGround=0;
       log('SPACE COMPUTER','Retour à la planète-base. Les droïdes-techniciens peuvent rééquiper le vaisseau.');
       checkPromotionAtBase();
     }

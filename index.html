@@ -367,20 +367,6 @@
 
 <main id="tab-controle">
   <div class="card">
-    <h2>Vérification du système</h2>
-    <p id="version-controle" style="font-family:monospace;font-size:.85rem;color:var(--accent);margin-bottom:10px;"></p>
-    <div id="checks"></div>
-    <button class="btn-primary" style="margin-top:10px;" onclick="renderControle()">Relancer les vérifications</button>
-  </div>
-  <div class="card">
-    <h2>Historique des opérations</h2>
-    <select id="op-filter" onchange="renderOpLog()"><option value="">Toutes les tables</option></select>
-    <div style="overflow-x:auto;margin-top:10px;"><table id="op-table" style="width:100%;font-size:12px;border-collapse:collapse;"></table></div>
-    <button class="btn-secondary" style="margin-top:10px;" onclick="exportOpLog()">Exporter le journal (JSON)</button>
-    <button class="btn-secondary" style="margin-top:10px;" onclick="annulerDernierTour()">Revenir au début du tour</button>
-    <button class="btn-secondary" style="margin-top:10px;" onclick="testerRetourDegat()">Tester les secousses</button>
-  </div>
-  <div class="card">
     <h2>Carte générée et déplacements</h2>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">
       <button id="lv-1" onclick="setControleLevel(1)">Niv. 1</button><button id="lv-2" onclick="setControleLevel(2)">Niv. 2</button>
@@ -391,6 +377,10 @@
       ■ rouge : base · ● or : planète inconnue · ● vert : planète repérée · ◆ : vaisseau<br>
       ■ violet : réseau magnéto-gravitationnel · ■ orange : distorsion nullius · ● noir : trou noir · tracé bleu : déplacements
     </div>
+  </div>
+  <div class="card">
+    <h2>Export du journal</h2>
+    <button class="btn-secondary" style="margin-top:10px;" onclick="exportOpLog()">Exporter le journal (JSON)</button>
   </div>
 </main>
 

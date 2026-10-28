@@ -2529,19 +2529,8 @@ function opInputsText(o){
   return Object.entries(o.inputs).map(([k,v])=>k+' '+v).join(', ');
 }
 
-function renderOpLog(){
-  const f=document.getElementById('op-filter').value;
-  const rows=opLog.filter(o=>!f||o.table===f);
-  const t=document.getElementById('op-table');
-  if(!rows.length){ t.innerHTML='<tr><td style="color:#888;padding:8px;">Aucune opération enregistrée.</td></tr>'; return; }
-  t.innerHTML='<tr style="background:var(--accent-light);"><th style="border:1px solid var(--border);padding:4px;">Tour</th><th style="border:1px solid var(--border);padding:4px;">Table</th><th style="border:1px solid var(--border);padding:4px;">Opération</th><th style="border:1px solid var(--border);padding:4px;">Entrées</th><th style="border:1px solid var(--border);padding:4px;">Résultat</th><th style="border:1px solid var(--border);padding:4px;">Effet</th></tr>'
-   + rows.slice().reverse().map(o=>`<tr><td style="border:1px solid var(--border);padding:4px;">${o.tour}</td><td style="border:1px solid var(--border);padding:4px;">${o.table}</td><td style="border:1px solid var(--border);padding:4px;">${o.label}</td><td style="border:1px solid var(--border);padding:4px;">${opInputsText(o)}</td><td style="border:1px solid var(--border);padding:4px;"><b>${o.result}</b></td><td style="border:1px solid var(--border);padding:4px;">${o.effect}</td></tr>`).join('');
-  const sel=document.getElementById('op-filter'); const tables=[...new Set(opLog.map(o=>o.table))];
-  const cur=sel.value; sel.innerHTML='<option value="">Toutes les tables ('+opLog.length+')</option>'+tables.map(x=>`<option value="${x}">${x}</option>`).join(''); sel.value=cur;
-}
-
 function exportOpLog(){
-  const blob=new Blob([JSON.stringify({ops:opLog,checks:runChecks()},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({ops:opLog},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='legio_journal_operations.json'; a.click();
 }
 
@@ -2592,10 +2581,6 @@ function runChecks(){
 }
 
 function renderControle(){
-  const checks=runChecks();
-  document.getElementById('checks').innerHTML=checks.map(c=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>${c.ok?'✔':'✖'} ${c.n}</span><span style="color:var(--text-muted);text-align:right;">${c.d}</span></div>`).join('')
-    + `<div style="margin-top:8px;font-weight:bold;color:${checks.every(c=>c.ok)?'var(--success)':'var(--danger)'};">${checks.filter(c=>c.ok).length} / ${checks.length} vérifications réussies</div>`;
-  renderOpLog();
   [1,2,3,4].forEach(z=>{ const b=document.getElementById('lv-'+z); if(b) b.style.background = z===controleLevel?'var(--accent-light)':''; });
   renderMapSvg();
 }
@@ -2804,7 +2789,6 @@ function rafraichirApresRestauration(){
   renderShip();
   updateRouteLimits();
   renderPlanets();
-  if(typeof renderOpLog === 'function') renderOpLog();
 }
 
 // ==========================================

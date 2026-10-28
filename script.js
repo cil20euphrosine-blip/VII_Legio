@@ -1094,6 +1094,8 @@ function executeRoute(){
 
   state.computersUsedThisTurn=0; state.observablePlanets=[];
   const planetSightings = {};
+  // Chaque déplacement régénère l'indication : on efface le repérage du déplacement précédent
+  state.planets.forEach(p=>{ p.report = null; });
   let stepCount=0;
   let baseSighting=null;
 

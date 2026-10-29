@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.3.19 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.20 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.3.19";
+const APP_VERSION = "v1.3.20";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},

@@ -23,7 +23,6 @@
     display: block;
     margin-bottom: 2px;
   }
-</style>
   <link rel="stylesheet" href="popup-sms.css">
 </head>
 <body>
@@ -37,6 +36,13 @@
       <div class="points" id="display-points">0</div>
       <div class="promo-text">points · promotion à 6</div>
     </div>
+  </div>
+  <div id="bandeau-conteneurs" style="padding:0 12px 6px;">
+<div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px;">
+      <span>Containers occupés</span>
+      <strong id="containers-text">8 / 10</strong>
+    </div>
+    <div class="containers" id="containers-visual"></div>
   </div>
   <div class="status-bar">
     <div class="status-item" id="display-turn">Tour 1</div>
@@ -112,11 +118,7 @@
   <div class="card">
     <h2>Fiche-vaisseau</h2>
     <div class="alert-box" id="ship-alert"><strong>Statut : À la Base.</strong> Équipement configuré.</div>
-    <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px;">
-      <span>Containers occupés</span>
-      <strong id="containers-text">8 / 10</strong>
-    </div>
-    <div class="containers" id="containers-visual"></div>
+
     
     <div class="stat-row">
       <div class="stat-info"><h3>Équipages (E.)</h3><p>F.C. 3 · minimum <span id="eq-min">1</span></p></div>
@@ -196,6 +198,11 @@
 </main>
 
 <main id="tab-route">
+  <div class="card" style="padding-bottom:5px;">
+    <h2>Planètes repérées</h2>
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:15px;">Computers : <strong id="computers-available">1</strong> information disponible ce tour.<br><small><em>(Seules les planètes détectées par les radars ce tour sont analysables.)</em></small></p>
+    <div id="planets-container"></div>
+  </div>
   <div class="card">
     <h2>Déclarer la route</h2>
     <div class="alert-box" style="font-weight:bold;text-align:center;">Poussée disponible : <span id="max-thrust">15</span> parsecs</div>
@@ -247,13 +254,7 @@
   </div>
 </main>
 
-<main id="tab-planetes">
-  <div class="card" style="padding-bottom:5px;">
-    <h2>Planètes repérées</h2>
-    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:15px;">Computers : <strong id="computers-available">1</strong> information disponible ce tour.<br><small><em>(Seules les planètes détectées par les radars ce tour sont analysables.)</em></small></p>
-    <div id="planets-container"></div>
-  </div>
-</main>
+
 
 <main id="tab-debarquer">
   <div id="landing-content" style="display:none;">
@@ -416,10 +417,9 @@
     <button onclick="passTurn()">Passer le tour sur place (Demande d'info)</button>
   </div>
   <nav>
-  <button onclick="switchTab('vaisseau')" id="nav-vaisseau"><span class="icon">⛵</span>Vaisseau</button>
-  <button onclick="switchTab('route')" id="nav-route"><span class="icon">◎</span>Route</button>
-  <button onclick="switchTab('planetes')" id="nav-planetes"><span class="icon">🪐</span>Planètes</button>
-  <button onclick="switchTab('debarquer')" id="nav-debarquer"><span class="icon">⬇</span>Atterrir</button>
+  <button onclick="switchTab('vaisseau')" id="nav-vaisseau"><span class="icon">⛵</span>Équipement</button>
+  <button onclick="switchTab('route')" id="nav-route"><span class="icon">◎</span>Navigation</button>
+  <button onclick="switchTab('debarquer')" id="nav-debarquer"><span class="icon">⬇</span>Mission</button>
   <button onclick="switchTab('bestiaire')" id="nav-bestiaire"><span class="icon">👾</span>Bestiaire</button>
   <button onclick="switchTab('journal')" id="nav-journal"><span class="icon">📋</span>Journal</button>
   <button onclick="switchTab('controle')" id="nav-controle"><span class="icon">✔</span>Contrôle</button>

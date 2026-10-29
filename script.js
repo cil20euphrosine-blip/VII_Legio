@@ -1459,7 +1459,7 @@ function prepareLanding(planet){
   document.getElementById('no-landing').style.display='none';
   document.getElementById('mission-panel').style.display='none';
   document.getElementById('ground-actions').style.display='none';
-  document.getElementById('op-box').style.display='none';
+  document.getElementById('op-box').style.display='block'; // O et P tirés au moment des boucliers, avant le choix d'attitude
   document.getElementById('behavior-selection').style.display='block';
   document.getElementById('combat-log').style.display='none';
   document.getElementById('landing-status').innerText=`Atterrissage sur la Planète #${planet.id} (niveau ${planet.z}).`;

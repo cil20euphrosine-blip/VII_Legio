@@ -954,6 +954,7 @@ function updateParsecsInput(ch){
   let v=state.route.parsecsInput+ch; if(v<1)v=1;
   if(v>getMaxThrust()-getCurrentTotal()) return;
   state.route.parsecsInput=v; document.getElementById('val-parsecs-input').innerText=v;
+  updateSegmentControls();
 }
 
 function addSegment(dir){
@@ -966,6 +967,24 @@ function addSegment(dir){
 
 function removeSegment(i){ state.route.segments.splice(i,1); renderSegments(); }
 
+// Sélection de la direction (pavé), puis ajout par « + segment »
+let selectedDir='N';
+function selectDir(d){ selectedDir=d; renderPave(); updateSegmentControls(); }
+function renderPave(){
+  ['NO','N','NE','O','E','SO','S','SE','HAUT','BAS'].forEach(d=>{
+    const b=document.getElementById('dir-'+d); if(b) b.classList.toggle('sel', d===selectedDir);
+  });
+}
+function addSelectedSegment(){ addSegment(selectedDir); updateSegmentControls(); }
+function updateSegmentControls(){
+  const vert=(selectedDir==='HAUT'||selectedDir==='BAS');
+  const rem=getMaxThrust()-getCurrentTotal();
+  const pas=vert?4:state.route.parsecsInput;
+  const add=document.getElementById('btn-add-seg'); if(add) add.disabled=(rem<=0)||(pas>rem);
+  document.querySelectorAll('#dist-stepper button').forEach(b=>b.disabled=vert);
+  const st=document.getElementById('dist-stepper'); if(st) st.style.opacity=vert?0.4:1;
+}
+
 function renderSegments(){
   const c=document.getElementById('segments-container'); c.innerHTML=''; let total=0;
   if(state.route.segments.length===0) c.innerHTML='<span style="color:#aaa;font-style:italic;">Aucune</span>';
@@ -977,6 +996,7 @@ function renderSegments(){
   document.getElementById('thrust-bar').style.width = max?`${(total/max)*100}%`:'0%';
   document.getElementById('btn-execute').disabled=(total===0);
   const rem=max-total; if(state.route.parsecsInput>rem){ state.route.parsecsInput=rem>0?rem:1; document.getElementById('val-parsecs-input').innerText=state.route.parsecsInput; }
+  updateSegmentControls();
 }
 
 function updateRadars(ch){

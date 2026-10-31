@@ -209,19 +209,22 @@
     <div class="alert-box" style="font-weight:bold;text-align:center;">Poussée disponible : <span id="max-thrust">15</span> parsecs</div>
     <div class="input-group">
       <span style="font-size:.9rem;color:var(--text-muted);">Parsecs</span>
-      <div class="counter" style="border-color:var(--accent);">
+      <div class="counter" id="dist-stepper" style="border-color:var(--accent);">
         <button onclick="updateParsecsInput(-1)">−</button><span id="val-parsecs-input">1</span><button onclick="updateParsecsInput(1)">+</button>
       </div>
     </div>
-    <div style="text-align:center;font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Cliquez sur une direction pour l'ajouter</div>
-    <div class="route-grid">
-      <button onclick="addSegment('NO')">NO</button><button onclick="addSegment('N')">N</button><button onclick="addSegment('NE')">NE</button>
-      <button onclick="addSegment('O')">O</button><button class="center">vaisseau</button><button onclick="addSegment('E')">E</button>
-      <button onclick="addSegment('SO')">SO</button><button onclick="addSegment('S')">S</button><button onclick="addSegment('SE')">SE</button>
+    <div style="text-align:center;font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Choisissez une direction, puis « + segment »</div>
+    <div class="route-grid" id="pave">
+      <button id="dir-NO" onclick="selectDir('NO')">NO</button><button id="dir-N" class="sel" onclick="selectDir('N')">N</button><button id="dir-NE" onclick="selectDir('NE')">NE</button>
+      <button id="dir-O" onclick="selectDir('O')">O</button><button class="center">vaisseau</button><button id="dir-E" onclick="selectDir('E')">E</button>
+      <button id="dir-SO" onclick="selectDir('SO')">SO</button><button id="dir-S" onclick="selectDir('S')">S</button><button id="dir-SE" onclick="selectDir('SE')">SE</button>
       <div style="grid-column:span 3;display:flex;gap:5px;margin-top:5px;">
-        <button onclick="addSegment('HAUT')" style="flex:1;">▲ HAUT (4)</button>
-        <button onclick="addSegment('BAS')" style="flex:1;">▼ BAS (4)</button>
+        <button id="dir-HAUT" onclick="selectDir('HAUT')" style="flex:1;">▲ HAUT (4)</button>
+        <button id="dir-BAS" onclick="selectDir('BAS')" style="flex:1;">▼ BAS (4)</button>
       </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:8px;">
+      <button id="btn-add-seg" class="btn-primary" onclick="addSelectedSegment()" style="flex:1;">+ segment</button>
     </div>
     <div style="margin-top:15px;margin-bottom:15px;">
       <div style="font-size:.8rem;font-weight:bold;color:var(--text-muted);margin-bottom:5px;">ROUTE ACTUELLE</div>
@@ -233,7 +236,7 @@
         <div id="thrust-bar" style="height:100%;width:0%;background:var(--dark-teal);border-radius:2px;"></div>
       </div>
     </div>
-    <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:none;">
       <span style="font-weight:bold;font-size:.95rem;">Radars en exploration</span>
       <div class="counter">
         <button onclick="updateRadars(-1)">−</button><span id="val-route-radars">2</span><button onclick="updateRadars(1)">+</button>
@@ -248,7 +251,7 @@
         <input type="checkbox" id="check-landing">
         <span><strong>Déclarer comme route d'atterrissage</strong></span>
       </label>
-      <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled>Transmettre au S.C.</button>
+      <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled>Annoncer la route</button>
       <button class="btn-primary" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:10px;" onclick="resetRoute()">Effacer la route</button>
 
     </div>

@@ -3122,3 +3122,26 @@ document.getElementById('log-container').addEventListener('click',e=>{
   document.addEventListener('pointerup',fin);
   document.addEventListener('pointercancel',fin);
 })();
+
+
+// ==========================================
+// BANDEAU DU VAISSEAU : détail (déplié) et résumé (replié)
+// ==========================================
+function toggleBandeauVaisseau(){ const b=document.getElementById('bandeau'); if(b) b.classList.toggle('deplie'); }
+function renderBandeauDetail(){
+  const s=state.ship; if(!s || !document.getElementById('bd-grille')) return;
+  const tuiles=[['Lasers',s.lasers],['Boucliers',s.shields],['Radars',s.radars],['Ordinateurs',s.computers],['Réservoirs',s.tanks],['Modules',s.modules],['Coque (tour)',(state.hullHitsThisTurn||0)+' / 2'],['Équipages',s.crew]];
+  document.getElementById('bd-grille').innerHTML=tuiles.map(([n,v])=>`<div class="bd-tuile"><small>${n}</small><b>${v}</b></div>`).join('');
+  const eq=document.getElementById('bd-equip');
+  if(state.groundCrews && state.groundCrews.length){
+    eq.innerHTML='Équipages à terre : '+state.groundCrews.map((g,i)=>`E${i+1} ${'●'.repeat(Math.max(0,g.v))}${'○'.repeat(Math.max(0,3-g.v))}`).join(' · ');
+  } else {
+    eq.innerHTML=`Équipages à bord : ${s.crew} (3 hommes chacun)`;
+  }
+  const sum=document.getElementById('bd-equipages'); if(sum) sum.textContent='Équipages : '+s.crew;
+}
+(function(){
+  const original=renderShip;
+  renderShip=function(){ original(); renderBandeauDetail(); };
+})();
+renderBandeauDetail(); // premier affichage (le démarrage a eu lieu avant cette définition)

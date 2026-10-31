@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr"><head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<html lang="fr">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Decurio NOTIUS v1.3.20 — LEGIO VII Solo</title>
-<link rel="stylesheet" href="index_files/styles_R8_S.css">
+<title>Decurio NOTIUS v1.4.0 — LEGIO VII Solo</title>
+<link rel="stylesheet" href="styles.css?v=1.4.0">
 <style>
   /* Ajustement de la barre de navigation pour forcer l'affichage de tous les onglets */
   nav {
@@ -45,7 +45,7 @@
 <header>
   <div class="header-top">
     <div>
-      <h1>DECURIO NOTIUS <span id="app-version" style="font-size:0.75rem; background:var(--accent-light); color:var(--accent); padding:2px 6px; border-radius:4px; vertical-align:middle;">v1.3.20</span></h1>
+      <h1>Decurio NOTIUS <span id="app-version" style="font-size:0.75rem; background:var(--accent-light); color:var(--accent); padding:2px 6px; border-radius:4px; vertical-align:middle;">v1.4.0</span></h1>
       <div class="subtitle" id="ship-title">FROMBOLA « MARTHIA » · niveau 0</div>
     </div>
     <div>
@@ -56,15 +56,15 @@
   <div id="bandeau-conteneurs" style="padding:0 12px 6px;">
 <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px;">
       <span>Containers occupés</span>
-      <strong id="containers-text">9 / 10</strong>
+      <strong id="containers-text">8 / 10</strong>
     </div>
-    <div class="containers" id="containers-visual"><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box empty"></div></div>
+    <div class="containers" id="containers-visual"></div>
   </div>
   <div class="status-bar">
     <div class="status-item" id="display-turn">Tour 1</div>
     <div class="status-item active" id="display-level">Niveau 1</div>
-    <div class="status-item active" id="display-status">À la Base</div>
-    <div class="status-item active" id="display-shields">Boucliers Activés</div>
+    <div class="status-item" id="display-status">À la Base</div>
+    <div class="status-item" id="display-shields">Boucliers Activés</div>
   </div>
 </header>
 <div id="scenario-banner" class="scenario-banner"></div>
@@ -78,7 +78,7 @@
         <p>Fixé au lancement, sans bascule en cours de partie</p>
       </div>
       <select id="level-select" onchange="setLevel(this.value)">
-        <option value="BASE" selected="selected">BASE · espace interne</option>
+        <option value="BASE">BASE · espace interne</option>
         <option value="AVANCE">AVANCÉ · espace externe</option>
       </select>
     </div>
@@ -88,7 +88,7 @@
         <p>Fixée au début du voyage</p>
       </div>
       <select id="pers-select" onchange="setPersonality(this.value)">
-        <option selected="selected">0</option>
+        <option>0</option>
         <option>1</option>
         <option>2</option>
         <option>3</option>
@@ -100,13 +100,13 @@
 
   <div class="card" id="savant-card" style="display:none">
     <h2>Officier spécialiste (AVANCÉ)</h2>
-    <div class="stat-row" style="display: none;">
+    <div class="stat-row">
       <div class="stat-info">
         <h3>Niveau du savant (points)</h3>
         <p>Valeur 0 à 4 · score du tableau S · ne tient pas de container</p>
       </div>
       <select id="savant-select" onchange="setSavant(this.value)" style="width:auto;">
-        <option value="0" hidden="" disabled="disabled" selected="selected">—</option>
+        <option value="0" hidden disabled>—</option>
         <option value="1">1</option>
         <option value="2">2</option>
         <option value="3">3</option>
@@ -119,7 +119,7 @@
         <p>Un seul à bord · choix du type d'officier</p>
       </div>
       <select id="specialite-select" onchange="setSpecialite(this.value)" style="width:auto;">
-        <option value="" selected="selected">non défini</option>
+        <option value="">non défini</option>
         <option value="géologue">Géologue</option>
         <option value="biologiste">Biologiste</option>
         <option value="botaniste">Botaniste</option>
@@ -133,7 +133,7 @@
 
   <div class="card">
     <h2>Fiche-vaisseau</h2>
-    <div class="alert-box" id="ship-alert" style="background: var(--accent-light);"><strong>Statut : À la Base.</strong> Vous pouvez modifier l'équipement.</div>
+    <div class="alert-box" id="ship-alert"><strong>Statut : À la Base.</strong> Équipement configuré.</div>
 
     
     <div class="stat-row">
@@ -168,7 +168,7 @@
       <div class="counter" style="margin-bottom:10px;">
         <button onclick="updateShip('modules',-1)">−</button><span id="val-modules">0</span><button onclick="updateShip('modules',1)">+</button>
       </div>
-      <div id="module-details" class="module-selector" style="width:100%;"><div style="font-size:.8rem;color:#888;font-style:italic;">Aucun module embarqué.</div></div>
+      <div id="module-details" class="module-selector" style="width:100%;"></div>
     </div>
   </div>
 
@@ -192,7 +192,7 @@
     <button class="btn-danger" onclick="resetGame()">Abandonner et réinitialiser la partie</button>
     <div id="dev-tools" style="display:none">
       <button class="btn-test" onclick="loadNotiusScenario()">⚙️ Charger le scénario Notius</button>
-      <button class="btn-debug" onclick="switchTab('debug')">🗺️ Carte &amp; debug</button>
+      <button class="btn-debug" onclick="switchTab('debug')">🗺️ Carte & debug</button>
     </div>
   </div>
   <div class="card">
@@ -202,11 +202,11 @@
     <hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">
     <input type="file" id="fichier-restauration" accept="application/json,.json" onchange="chargerFichierSauvegarde()">
     <div id="choix-restauration" style="display:none;margin-top:12px;">
-      <label class="radio-item"><input type="checkbox" value="partie" checked="checked"> <span><strong>Partie</strong> (niveau, tour, points, personnalité, savant)</span></label>
-      <label class="radio-item"><input type="checkbox" value="vaisseau" checked="checked"> <span><strong>Vaisseau</strong> (containers, équipements)</span></label>
-      <label class="radio-item"><input type="checkbox" value="position" checked="checked"> <span><strong>Position</strong> (base, vaisseau, boucliers)</span></label>
-      <label class="radio-item"><input type="checkbox" value="planetes" checked="checked"> <span><strong>Planètes</strong> (carte, planètes repérées, risques)</span></label>
-      <label class="radio-item"><input type="checkbox" value="journal" checked="checked"> <span><strong>Journal</strong> (journal de bord et log de debug)</span></label>
+      <label class="radio-item"><input type="checkbox" value="partie" checked> <span><strong>Partie</strong> (niveau, tour, points, personnalité, savant)</span></label>
+      <label class="radio-item"><input type="checkbox" value="vaisseau" checked> <span><strong>Vaisseau</strong> (containers, équipements)</span></label>
+      <label class="radio-item"><input type="checkbox" value="position" checked> <span><strong>Position</strong> (base, vaisseau, boucliers)</span></label>
+      <label class="radio-item"><input type="checkbox" value="planetes" checked> <span><strong>Planètes</strong> (carte, planètes repérées, risques)</span></label>
+      <label class="radio-item"><input type="checkbox" value="journal" checked> <span><strong>Journal</strong> (journal de bord et log de debug)</span></label>
     </div>
     <button class="btn-primary" id="btn-restaurer" onclick="restaurerSectionsCochees()" style="display:none;margin-top:12px;background:var(--dark-teal);">Restaurer les sections cochées</button>
     <p id="message-sauvegarde" role="status" style="font-size:.85rem;margin-top:10px;color:var(--accent);"></p>
@@ -217,14 +217,14 @@
   <div class="card" style="padding-bottom:5px;">
     <h2>Planètes repérées</h2>
     <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:15px;">Computers : <strong id="computers-available">1</strong> information disponible ce tour.<br><small><em>(Seules les planètes détectées par les radars ce tour sont analysables.)</em></small></p>
-    <div id="planets-container"><p style="text-align:center;color:#888;">Aucune planète repérée.</p></div>
+    <div id="planets-container"></div>
   </div>
   <div class="card">
     <h2>Déclarer la route</h2>
     <div class="alert-box" style="font-weight:bold;text-align:center;">Poussée disponible : <span id="max-thrust">15</span> parsecs</div>
     <div class="input-group">
       <span style="font-size:.9rem;color:var(--text-muted);">Parsecs</span>
-      <div class="counter" id="dist-stepper" style="border-color: var(--accent); opacity: 1;">
+      <div class="counter" id="dist-stepper" style="border-color:var(--accent);">
         <button onclick="updateParsecsInput(-1)">−</button><span id="val-parsecs-input">1</span><button onclick="updateParsecsInput(1)">+</button>
       </div>
     </div>
@@ -258,7 +258,7 @@
       </div>
     </div>
     <label class="radio-item">
-      <input type="checkbox" id="check-shields" checked="checked" onchange="setShields(this.checked)">
+      <input type="checkbox" id="check-shields" checked onchange="setShields(this.checked)">
       <span><strong>Boucliers activés pour ce tour</strong> (fixés une fois la route transmise)</span>
     </label>
     <div style="background:var(--bg-color);padding:15px;border-radius:8px;border:1px solid var(--border);">
@@ -266,7 +266,7 @@
         <input type="checkbox" id="check-landing">
         <span><strong>Déclarer comme route d'atterrissage</strong></span>
       </label>
-      <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled="disabled">Annoncer la route</button>
+      <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled>Annoncer la route</button>
       <button class="btn-primary" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:10px;" onclick="resetRoute()">Effacer la route</button>
 
     </div>
@@ -349,14 +349,14 @@
           <div><span class="m-title">Recherche scientifique</span><span class="m-desc">Sub Civiles ou Civiles · dé 6 + savant − technologie</span></div>
           <span class="m-tab">TAB. S</span>
         </div>
-        <div class="mission-btn" id="btn-alliance" onclick="startAlliance()">
-          <div><span class="m-title">Alliance</span><span class="m-desc">Civiles ou Super Civiles · tableau E</span></div>
+        <div class="mission-btn disabled">
+          <div><span class="m-title">Alliance</span><span class="m-desc">Réservée aux Sapiens Civiles (F. alliance)</span></div>
           <span class="m-tab">TAB. E</span>
         </div>
         <button class="btn-primary" onclick="passerTourSurPlanete()" style="margin-top:15px;background:var(--dark-teal);">Passer un tour sur la planète</button>
         <button class="btn-primary" onclick="rechercherSurPlace()" style="margin-top:8px;background:var(--dark-teal);">Rechercher les Extrasolaires (sur place)</button>
         <button class="btn-primary" onclick="retenterAtterrissage()" style="margin-top:8px;background:var(--dark-teal);">Perdre un tour et retenter un atterrissage</button>
-        <div class="mission-btn" id="btn-capture" style="display: none;" onclick="startCapture()"><div><span class="m-title">Capture d'Extrasolaire</span><span class="m-desc">Non Sapiens · sans armes · tableau D</span></div><span class="m-tab">TAB. D</span></div><div class="mission-btn" id="btn-rotsa" style="display: none;" onclick="startRotsa()"><div><span class="m-title">Prise de la Pierre ROTSA</span><span class="m-desc">Nilbog pacifiques · selon le nombre d'équipages</span></div><span class="m-tab">ROTSA</span></div><div class="mission-btn" id="btn-duel" style="display: none;" onclick="startDuel()"><div><span class="m-title">Duel d'honneur</span><span class="m-desc">Combat singulier · 1 équipage contre champion</span></div><span class="m-tab">DUEL</span></div><div class="mission-btn" id="btn-tot100" style="display: none;" onclick="startTot100()"><div><span class="m-title">Arme Iono-Nucléaire TOT 100%</span><span class="m-desc">Spatha / Hasta · Désintégration planétaire</span></div><span class="m-tab">TAB. L</span></div><button class="btn-primary" id="btn-switch-to-ground" style="display: none; margin-top: 10px; background: var(--dark-teal);" onclick="switchToGroundMode()">Couper les boucliers pour débarquer (C/D)</button><button id="btn-reembark" class="btn-primary" onclick="reembark()" style="display:none;margin-top:15px;background:var(--dark-teal);">Réembarquer les équipages</button>
+        <button id="btn-reembark" class="btn-primary" onclick="reembark()" style="display:none;margin-top:15px;background:var(--dark-teal);">Réembarquer les équipages</button>
         <button id="btn-orbit" class="btn-primary" onclick="endMission()" style="display:none;margin-top:15px;">Quitter l'orbite / décoller</button>
       </div>
     </div>
@@ -372,7 +372,7 @@
     </p>
     <div style="margin-bottom:15px;">
       <select id="bestiaire-select" onchange="renderBestiaireDetail(this.value)" style="width:100%;padding:10px;font-size:.9rem;border-radius:6px;border:1px solid var(--border);">
-        <option value="" selected="selected">-- Choisir une race à vérifier --</option>
+        <option value="">-- Choisir une race à vérifier --</option>
       </select>
     </div>
     <div id="bestiaire-content">
@@ -383,6 +383,7 @@
 
 
 <main id="tab-controle">
+  <p id="version-controle" style="font-size:.8rem;color:var(--text-muted);text-align:center;margin:0 0 10px;"></p>
   <div class="card">
     <h2>Carte générée et déplacements</h2>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">
@@ -420,7 +421,7 @@
     <div class="map-grid" id="map-debug-container"></div>
     <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
     <h2 style="color:var(--danger);">Historique des événements</h2>
-    <textarea id="debug-log-text" readonly="readonly">19:26:37 [Tour 1] Galaxie générée : base niv 1, 35 planètes.</textarea>
+    <textarea id="debug-log-text" readonly></textarea>
     <div style="display:flex;gap:10px;margin-top:10px;">
       <button class="btn-primary" style="background:var(--dark-teal);" onclick="copyDebugLog()">Copier le log</button>
       <button class="btn-danger" onclick="clearTravelHistory()">Effacer les traces</button>
@@ -433,19 +434,18 @@
     <button onclick="passTurn()">Passer le tour sur place (Demande d'info)</button>
   </div>
   <nav>
-  <button onclick="switchTab('vaisseau')" id="nav-vaisseau" class="active"><span class="icon">⛵</span>Équipement</button>
+  <button onclick="switchTab('vaisseau')" id="nav-vaisseau"><span class="icon">⛵</span>Équipement</button>
   <button onclick="switchTab('route')" id="nav-route"><span class="icon">◎</span>Navigation</button>
   <button onclick="switchTab('debarquer')" id="nav-debarquer"><span class="icon">⬇</span>Mission</button>
   <button onclick="switchTab('bestiaire')" id="nav-bestiaire"><span class="icon">👾</span>Bestiaire</button>
   <button onclick="switchTab('controle')" id="nav-controle"><span class="icon">✔</span>Contrôle</button>
 </nav>
 
-<script src="index_files/script_R8_S.js"></script>
+<script src="script.js?v=1.4.0"></script>
 <div id="fil" class="repos">
   <div class="fil-poignee" onclick="cycleFil()"></div>
   <div class="fil-entete" onclick="cycleFil()">Fil d'échanges <span id="fil-badge" class="fil-badge" style="display:none">0</span></div>
   <div class="fil-corps"><div id="log-container"></div></div>
 </div>
-
-
-</body></html>
+</body>
+</html>

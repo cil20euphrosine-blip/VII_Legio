@@ -476,9 +476,10 @@ function switchTab(tabId){
   if(tabId==='debug'){ renderDebugMap(); document.getElementById('debug-log-text').value=state.debugLogs.join('\n'); }
 }
 
-function log(sender,text){
+function log(sender,text,pid){
   const c=document.getElementById('log-container'); const div=document.createElement('div');
   div.className=`log-entry ${sender==='SPACE COMPUTER'?'log-sc':'log-uc'}`;
+  if(pid!==undefined && pid!==null){ div.dataset.planet=String(pid); div.classList.add('log-planete'); }
   div.innerHTML=`<div class="log-sender">${sender}</div><div>${text}</div>`;
   c.prepend(div);
   filNonLus(sender);
@@ -992,18 +993,18 @@ function removeSegment(i){ state.route.segments.splice(i,1); renderSegments(); }
 
 // Sélection de la direction (pavé), puis ajout par « + segment »
 let selectedDir='N';
-function selectDir(d){ selectedDir=d; renderPave(); updateSegmentControls(); }
+function selectDir(d){ selectedDir=d; addSegment(d); renderPave(); updateSegmentControls(); }
 function renderPave(){
   ['NO','N','NE','O','E','SO','S','SE','HAUT','BAS'].forEach(d=>{
     const b=document.getElementById('dir-'+d); if(b) b.classList.toggle('sel', d===selectedDir);
   });
 }
-function addSelectedSegment(){ addSegment(selectedDir); updateSegmentControls(); }
+
 function updateSegmentControls(){
-  const vert=(selectedDir==='HAUT'||selectedDir==='BAS');
   const rem=getMaxThrust()-getCurrentTotal();
-  const pas=vert?4:state.route.parsecsInput;
-  const add=document.getElementById('btn-add-seg'); if(add) add.disabled=(rem<=0)||(pas>rem);
+  const pas=state.route.parsecsInput;
+  document.querySelectorAll('#pave button[id^="dir-"]').forEach(b=>{ const v=b.id.slice(4); const need=(v==='HAUT'||v==='BAS')?4:pas; b.disabled=(need>rem); });
+  const vert=false;
   document.querySelectorAll('#dist-stepper button').forEach(b=>b.disabled=vert);
   const st=document.getElementById('dist-stepper'); if(st) st.style.opacity=vert?0.4:1;
 }
@@ -1196,7 +1197,7 @@ function executeRoute(){
   }
   Object.keys(planetSightings).forEach(pid => {
     const info = planetSightings[pid];
-    log('SPACE COMPUTER', `Au <b>${info.step}e parsec</b>, repérage au plus près de la <b>Planète #${pid}</b> ${info.isNew ? '(inconnue)' : '(déjà connue)'}. Distance minimale : <b>${info.dist} parsec(s)</b>. Direction : <b>${info.dir}</b>.`);
+    log('SPACE COMPUTER', `Au <b>${info.step}e parsec</b>, repérage au plus près de la <b>Planète #${pid}</b> ${info.isNew ? '(inconnue)' : '(déjà connue)'}. Distance minimale : <b>${info.dist} parsec(s)</b>. Direction : <b>${info.dir}</b>.`, pid);
   });
 
   let finalPos = maxSteps>0 ? {...path[maxSteps-1]} : {...state.position};
@@ -1272,7 +1273,7 @@ function passTurn(){
         state.points += discPts;
         recordOp('Découverte', 'Planète #' + p.id + ' (inconnue)', {distance: dist}, '+' + discPts + ' pt(s)', '');
       }
-      log('SPACE COMPUTER', `Depuis votre position, repérage de la <b>Planète #${p.id}</b> ${isNew ? '(inconnue)' : '(déjà connue)'}. Distance minimale : <b>${dist} parsec(s)</b>. Direction : <b>${dirText}</b>.`);
+      log('SPACE COMPUTER', `Depuis votre position, repérage de la <b>Planète #${p.id}</b> ${isNew ? '(inconnue)' : '(déjà connue)'}. Distance minimale : <b>${dist} parsec(s)</b>. Direction : <b>${dirText}</b>.`, p.id);
     }
   });
   document.getElementById('display-points').innerText = state.points;
@@ -1365,7 +1366,7 @@ function requestInfo(id){
     p.dnsCount = (p.dnsCount||0) + 1;
     log('SPACE COMPUTER', `D.N.S. : données insuffisantes (${p.dnsCount}/${DNS_LIMITE}). La demande est perdue, à répéter.` + (p.dnsCount>=DNS_LIMITE ? ' Plus aucune information possible sur cette planète avant atterrissage.' : ''));
   }
-  else { log('SPACE COMPUTER',r.text); p.infoLevel = (r.status==='end') ? 6 : p.infoLevel+1; }
+  else { log('SPACE COMPUTER',r.text,p.id); p.infoLevel = (r.status==='end') ? 6 : p.infoLevel+1; }
   addDebugLog(`Planète #${id} : information ${p.infoLevel}/6`);
   renderPlanets();
 }
@@ -3026,3 +3027,40 @@ if(versionControle) versionControle.textContent = `Version de l'application : ${
 // Démarrage (en fin de fichier : toutes les constantes et fonctions sont déjà définies)
 if(!proposerReprise()) startGame();
 switchTab('vaisseau');
+
+
+// ==========================================
+// FICHE PLANÈTE : ouverte depuis un message du S.C. dans le fil
+// ==========================================
+let fichePlanete=null;
+function ouvrirFichePlanete(pid){
+  fichePlanete=pid; renderFichePlanete();
+  document.getElementById('fiche-planete').style.display='flex';
+}
+function fermerFichePlanete(){ fichePlanete=null; document.getElementById('fiche-planete').style.display='none'; }
+function raisonDemandeInfo(p){
+  if(!p) return 'Planète introuvable.';
+  if(p.infoLevel>=6) return 'Information complète.';
+  if(state.computersUsedThisTurn>=state.ship.computers) return 'Aucun ordinateur libre ce tour.';
+  if(!state.observablePlanets.includes(p.id)) return 'Hors de portée des radars ce tour : refaites passer le vaisseau près de la planète, ou passez un tour sur place.';
+  if((p.dnsCount||0)>=DNS_LIMITE) return 'Données insuffisantes atteintes : atterrissez pour continuer.';
+  return '';
+}
+function renderFichePlanete(){
+  const box=document.getElementById('fiche-planete-corps'); if(!box) return;
+  const p=state.planets.find(x=>x.id===fichePlanete);
+  const entrees=[...document.querySelectorAll('#log-container [data-planet="'+fichePlanete+'"]')].reverse().map(e=>`<div class="log-entry ${e.classList.contains('log-sc')?'log-sc':'log-uc'}">${e.innerHTML}</div>`).join('');
+  const niveau=p?p.infoLevel:0;
+  const bars=[0,1,2,3,4,5].map(i=>`<div class="p-bar ${i<niveau?'active':''}"></div>`).join('');
+  const raison=raisonDemandeInfo(p);
+  box.innerHTML=`<h3 style="margin:0 0 6px;color:var(--dark-teal);">Planète #${fichePlanete}</h3>
+    <div class="p-bars" style="display:flex;gap:4px;margin-bottom:8px;">${bars}</div>
+    <p style="font-size:.8rem;color:var(--text-muted);margin:0 0 6px;">Informations : ${niveau}/6</p>
+    <div style="max-height:40vh;overflow-y:auto;">${entrees||'<p style="color:#888;">Aucun message pour cette planète.</p>'}</div>
+    <button class="btn-primary" style="width:100%;margin-top:10px;" ${raison?'disabled':''} onclick="requestInfo(fichePlanete);renderFichePlanete();renderPlanets();">Demander une information</button>
+    ${raison?`<p style="font-size:.75rem;color:var(--text-muted);margin:6px 0 0;">${raison}</p>`:''}
+    <button style="width:100%;margin-top:8px;" onclick="fermerFichePlanete()">Fermer</button>`;
+}
+document.getElementById('log-container').addEventListener('click',e=>{
+  const el=e.target.closest('[data-planet]'); if(el) ouvrirFichePlanete(Number(el.dataset.planet));
+});

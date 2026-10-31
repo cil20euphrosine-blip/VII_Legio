@@ -228,7 +228,7 @@
         <button onclick="updateParsecsInput(-1)">−</button><span id="val-parsecs-input">1</span><button onclick="updateParsecsInput(1)">+</button>
       </div>
     </div>
-    <div style="text-align:center;font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Choisissez une direction, puis « + segment »</div>
+    <div style="text-align:center;font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Touchez une direction pour l'ajouter à la route</div>
     <div class="route-grid" id="pave">
       <button id="dir-NO" onclick="selectDir('NO')">NO</button><button id="dir-N" class="sel" onclick="selectDir('N')">N</button><button id="dir-NE" onclick="selectDir('NE')">NE</button>
       <button id="dir-O" onclick="selectDir('O')">O</button><button class="center">vaisseau</button><button id="dir-E" onclick="selectDir('E')">E</button>
@@ -237,9 +237,6 @@
         <button id="dir-HAUT" onclick="selectDir('HAUT')" style="flex:1;">▲ HAUT (4)</button>
         <button id="dir-BAS" onclick="selectDir('BAS')" style="flex:1;">▼ BAS (4)</button>
       </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:8px;">
-      <button id="btn-add-seg" class="btn-primary" onclick="addSelectedSegment()" style="flex:1;">+ segment</button>
     </div>
     <div style="margin-top:15px;margin-bottom:15px;">
       <div style="font-size:.8rem;font-weight:bold;color:var(--text-muted);margin-bottom:5px;">ROUTE ACTUELLE</div>
@@ -267,6 +264,7 @@
         <span><strong>Déclarer comme route d'atterrissage</strong></span>
       </label>
       <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled>Annoncer la route</button>
+      <button class="btn-primary" onclick="passTurn()" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:8px;">Passer le tour sur place</button>
       <button class="btn-primary" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:10px;" onclick="resetRoute()">Effacer la route</button>
 
     </div>
@@ -430,9 +428,6 @@
 </main>
 
 <!-- Barre de navigation complète avec les 7 onglets ajustés pour tenir sur l'écran -->
-<div id="bar-passer" style="display:none;">
-    <button onclick="passTurn()">Passer le tour sur place (Demande d'info)</button>
-  </div>
   <nav>
   <button onclick="switchTab('vaisseau')" id="nav-vaisseau"><span class="icon">⛵</span>Équipement</button>
   <button onclick="switchTab('route')" id="nav-route"><span class="icon">◎</span>Navigation</button>
@@ -447,5 +442,11 @@
   <div class="fil-entete" onclick="cycleFil()">Fil d'échanges <span id="fil-badge" class="fil-badge" style="display:none">0</span></div>
   <div class="fil-corps"><div id="log-container"></div></div>
 </div>
+<div id="fiche-planete" onclick="if(event.target===this)fermerFichePlanete()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:flex-end;justify-content:center;z-index:60;">
+  <div id="fiche-planete-corps" style="background:var(--bg-color,#fff);width:100%;max-width:520px;max-height:85vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px;box-sizing:border-box;"></div>
+</div>
+<style>
+  #log-container .log-planete{cursor:pointer;text-decoration:underline dotted;}
+</style>
 </body>
 </html>

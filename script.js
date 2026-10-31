@@ -481,8 +481,31 @@ function log(sender,text){
   div.className=`log-entry ${sender==='SPACE COMPUTER'?'log-sc':'log-uc'}`;
   div.innerHTML=`<div class="log-sender">${sender}</div><div>${text}</div>`;
   c.prepend(div);
-  if(window.PopupSMS) window.PopupSMS.add(sender,text); // pop-up SMS (popup-sms.js)
+  filNonLus(sender);
   scheduleAutosave();
+}
+
+// Fil d'échanges : trois niveaux (repos / mi / plein)
+let filNiveau='repos', filNonLusN=0, filTimer=null;
+function appliquerFil(){
+  const f=document.getElementById('fil'); if(!f) return;
+  f.className=filNiveau;
+  const b=document.getElementById('fil-badge');
+  if(b){ b.style.display=filNonLusN>0?'':'none'; b.textContent=filNonLusN; }
+}
+function cycleFil(){ filNiveau={repos:'mi',mi:'plein',plein:'repos'}[filNiveau]; if(filNiveau!=='repos') filNonLusN=0; appliquerFil(); }
+function ouvrirFil(niv){ filNiveau=niv||'mi'; filNonLusN=0; appliquerFil(); }
+function filNonLus(sender){
+  if(filNiveau!=='repos'){ appliquerFil(); return; }
+  filNonLusN++;
+  if(sender==='SPACE COMPUTER'){
+    // nouvelle information du S.C. : déplier à mi-hauteur quelques secondes, puis replier
+    const f=document.getElementById('fil'); if(f) f.className='mi';
+    clearTimeout(filTimer); filTimer=setTimeout(()=>{ if(filNiveau==='repos') appliquerFil(); },4000);
+    const bd=document.getElementById('fil-badge'); if(bd){ bd.style.display=''; bd.textContent=filNonLusN; }
+    return;
+  }
+  appliquerFil();
 }
 
 function logCombat(text){ const cl=document.getElementById('combat-log'); cl.style.display='block'; cl.innerHTML=text; }
@@ -1062,7 +1085,7 @@ function executeRoute(){
   state.isInFlight=true; renderShip();
   const isLanding=document.getElementById('check-landing').checked;
   const radar=state.route.radarsActive;
-  switchTab('journal');
+  ouvrirFil('mi');
   const routeStr=state.route.segments.map(s=>`${s.dir==='HAUT'||s.dir==='BAS'?'▲/▼ ':''}${s.parsecs} ${s.dir}`).join(' + ');
   log('OFFICIER COMMANDANT',`Tour ${state.turn} — Ma route : ${routeStr}. ${radar} radar(s). ${isLanding?"(route d'atterrissage)":''}`);
   addDebugLog(`>>> ROUTE : ${routeStr} (radars ${radar}, atterrissage ${isLanding})`);

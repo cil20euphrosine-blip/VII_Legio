@@ -28,6 +28,8 @@
   /* Fil d'échanges : journal de bord, trois niveaux */
   #fil{position:fixed;left:0;right:0;bottom:calc(66px + env(safe-area-inset-bottom,0px));max-width:720px;margin:0 auto;background:#fff;border-top:1px solid #e2d9c3;border-radius:18px 18px 0 0;box-shadow:0 -4px 14px rgba(0,0,0,.08);height:64px;display:flex;flex-direction:column;overflow:hidden;transition:height .25s ease;z-index:50}
   #fil.mi{height:45vh} #fil.plein{height:85vh}
+  #fil.glisse{transition:none}
+  #fil .fil-poignee,#fil .fil-entete{touch-action:none;user-select:none}
   #fil .fil-poignee{width:34px;height:4px;background:#cfc6b0;border-radius:2px;margin:6px auto 4px;flex:none}
   #fil .fil-entete{padding:0 14px 6px;font-size:13px;font-weight:700;color:#1f3d4a;flex:none;cursor:pointer}
   #fil .fil-badge{background:#9a7a2e;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:6px}

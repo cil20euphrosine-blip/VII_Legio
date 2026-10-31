@@ -3064,3 +3064,42 @@ function renderFichePlanete(){
 document.getElementById('log-container').addEventListener('click',e=>{
   const el=e.target.closest('[data-planet]'); if(el) ouvrirFichePlanete(Number(el.dataset.planet));
 });
+
+
+// ==========================================
+// FIL D'ÉCHANGES : dépliage au doigt (pointé, glissé, lâché)
+// ==========================================
+(function(){
+  let actif=false, y0=0, h0=0, moved=false;
+  const hauteurNiveau=n=> n==='repos'?64 : (n==='mi'? Math.round(window.innerHeight*0.45) : Math.round(window.innerHeight*0.85));
+  function debut(e){
+    const f=document.getElementById('fil'); if(!f) return;
+    actif=true; moved=false; y0=e.clientY; h0=f.getBoundingClientRect().height||hauteurNiveau(filNiveau);
+    f.classList.add('glisse');
+    if(e.target.setPointerCapture && e.pointerId!==undefined) try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+  }
+  function mouvement(e){
+    if(!actif) return;
+    const f=document.getElementById('fil'); if(!f) return;
+    const dy=y0-e.clientY; if(Math.abs(dy)>6) moved=true;
+    const min=64, max=Math.round(window.innerHeight*0.85);
+    f.style.height=Math.max(min,Math.min(max,h0+dy))+'px';
+  }
+  function fin(){
+    if(!actif) return; actif=false;
+    const f=document.getElementById('fil'); if(!f) return;
+    const hGlisse=parseFloat(f.style.height);
+    f.classList.remove('glisse'); f.style.height='';
+    if(!moved){ cycleFil(); return; }            // simple tap : cycle des niveaux
+    const h=hGlisse||f.getBoundingClientRect().height||hauteurNiveau(filNiveau);   // glissé : niveau le plus proche
+    const cibles=['repos','mi','plein'];
+    filNiveau=cibles.reduce((a,b)=> Math.abs(hauteurNiveau(b)-h)<Math.abs(hauteurNiveau(a)-h)?b:a);
+    if(filNiveau!=='repos') filNonLusN=0;
+    appliquerFil();
+  }
+  ['fil'].forEach(()=>{});
+  document.addEventListener('pointerdown',e=>{ const t=e.target&&e.target.closest?e.target:null; if(t&&t.closest('.fil-poignee, .fil-entete')) debut(e); });
+  document.addEventListener('pointermove',mouvement);
+  document.addEventListener('pointerup',fin);
+  document.addEventListener('pointercancel',fin);
+})();

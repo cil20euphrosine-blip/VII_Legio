@@ -486,7 +486,7 @@ function log(sender,text,pid){
   scheduleAutosave();
 }
 
-// Fil d'échanges : trois niveaux (repos / mi / plein)
+// Fil d'échanges : deux niveaux (repos / mi-hauteur)
 let filNiveau='repos', filNonLusN=0, filTimer=null;
 function appliquerFil(){
   const f=document.getElementById('fil'); if(!f) return;
@@ -494,16 +494,15 @@ function appliquerFil(){
   const b=document.getElementById('fil-badge');
   if(b){ b.style.display=filNonLusN>0?'':'none'; b.textContent=filNonLusN; }
 }
-function cycleFil(){ filNiveau={repos:'mi',mi:'plein',plein:'repos'}[filNiveau]; if(filNiveau!=='repos') filNonLusN=0; appliquerFil(); }
+function cycleFil(){ filNiveau=filNiveau==='repos'?'mi':'repos'; if(filNiveau!=='repos') filNonLusN=0; appliquerFil(); }
 function ouvrirFil(niv){ filNiveau=niv||'mi'; filNonLusN=0; appliquerFil(); }
 function filNonLus(sender){
   if(filNiveau!=='repos'){ appliquerFil(); return; }
   filNonLusN++;
   if(sender==='SPACE COMPUTER'){
     // nouvelle information du S.C. : déplier à mi-hauteur quelques secondes, puis replier
-    const f=document.getElementById('fil'); if(f) f.className='mi';
-    clearTimeout(filTimer); filTimer=setTimeout(()=>{ if(filNiveau==='repos') appliquerFil(); },4000);
-    const bd=document.getElementById('fil-badge'); if(bd){ bd.style.display=''; bd.textContent=filNonLusN; }
+    filNiveau='mi'; appliquerFil();
+    clearTimeout(filTimer); filTimer=setTimeout(()=>{ if(filNiveau==='mi'){ filNiveau='repos'; appliquerFil(); } },4000);
     return;
   }
   appliquerFil();
@@ -1330,7 +1329,7 @@ function renderPlanets(){
         F.C. ${fcText} · Missions : ${r.missions.join(', ')||'aucune'}${advDetails}
         ${r.notes? 'Notes : '+r.notes : ''}</div>`;
     }
-    h+=`<div class="planet-card"><div class="planet-header"><h3>Planète ${p.id} ${p.done?'(Visitée)':''}</h3><span class="pts">+${Math.max(0,2-cls().level)} pt(s) de découverte</span></div>
+    h+=`<div class="planet-card"><div class="planet-header" style="cursor:pointer;" onclick="ouvrirFichePlanete(${p.id})"><h3>Planète ${p.id} ${p.done?'(Visitée)':''}</h3><span class="pts">+${Math.max(0,2-cls().level)} pt(s) de découverte</span></div>
       <div class="planet-coords">Repérée au ${p.report?p.report.step:'?'}e parsec · ${p.report?p.report.dir:''} (niv. ${p.z})</div>
       <div class="progress-bars">${bars}</div>
       <div class="planet-data"><div class="label">Type</div><div class="value ${unk(ch.letter)}">${type}</div>
@@ -3035,9 +3034,16 @@ switchTab('vaisseau');
 let fichePlanete=null;
 function ouvrirFichePlanete(pid){
   fichePlanete=pid; renderFichePlanete();
-  document.getElementById('fiche-planete').style.display='flex';
+  document.getElementById('fil').style.display='none';
+  document.getElementById('fiche-planete').style.display='block';
+  document.getElementById('fiche-planete').scrollTop=0;
 }
-function fermerFichePlanete(){ fichePlanete=null; document.getElementById('fiche-planete').style.display='none'; }
+function fermerFichePlanete(){
+  fichePlanete=null;
+  document.getElementById('fiche-planete').style.display='none';
+  document.getElementById('fil').style.display='';
+  if(typeof renderPlanets==='function') renderPlanets();
+}
 function raisonDemandeInfo(p){
   if(!p) return 'Planète introuvable.';
   if(p.infoLevel>=6) return 'Information complète.';
@@ -3067,37 +3073,50 @@ document.getElementById('log-container').addEventListener('click',e=>{
 
 
 // ==========================================
-// FIL D'ÉCHANGES : dépliage au doigt (pointé, glissé, lâché)
+// FIL D'ÉCHANGES : feuille de bas d'écran, deux positions (repli / mi-hauteur)
+// Geste : suit le doigt, résistance hors bornes, décision par vitesse
+// (glissé rapide) puis par position, animation de fixation.
 // ==========================================
 (function(){
-  let actif=false, y0=0, h0=0, moved=false;
-  const hauteurNiveau=n=> n==='repos'?64 : (n==='mi'? Math.round(window.innerHeight*0.45) : Math.round(window.innerHeight*0.85));
+  const REPLI=64;
+  const MI=()=>Math.round(window.innerHeight*0.45);
+  let actif=false, y0=0, h0=0, moved=false, trace=[];
+  const hauteurCourante=(f)=> f.getBoundingClientRect().height || (filNiveau==='mi'?MI():REPLI);
   function debut(e){
     const f=document.getElementById('fil'); if(!f) return;
-    actif=true; moved=false; y0=e.clientY; h0=f.getBoundingClientRect().height||hauteurNiveau(filNiveau);
+    actif=true; moved=false; y0=e.clientY; h0=hauteurCourante(f); trace=[{t:performance.now(),y:e.clientY}];
     f.classList.add('glisse');
-    if(e.target.setPointerCapture && e.pointerId!==undefined) try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
   }
   function mouvement(e){
     if(!actif) return;
     const f=document.getElementById('fil'); if(!f) return;
     const dy=y0-e.clientY; if(Math.abs(dy)>6) moved=true;
-    const min=64, max=Math.round(window.innerHeight*0.85);
-    f.style.height=Math.max(min,Math.min(max,h0+dy))+'px';
+    trace.push({t:performance.now(),y:e.clientY}); if(trace.length>8) trace.shift();
+    let h=h0+dy; const max=MI();
+    if(h>max) h=max+(h-max)*0.25;            // résistance au-delà de la mi-hauteur
+    if(h<REPLI) h=REPLI+(h-REPLI)*0.25;      // résistance sous la ligne repliée
+    f.style.height=Math.max(0,h)+'px';
+  }
+  function vitesse(){
+    if(trace.length<2) return 0;
+    const a=trace[0], b=trace[trace.length-1], dt=b.t-a.t;
+    return dt>0 ? (a.y-b.y)/dt : 0;          // px/ms, positif = vers le haut
   }
   function fin(){
     if(!actif) return; actif=false;
     const f=document.getElementById('fil'); if(!f) return;
-    const hGlisse=parseFloat(f.style.height);
+    const hFin=parseFloat(f.style.height)||hauteurCourante(f);
     f.classList.remove('glisse'); f.style.height='';
-    if(!moved){ cycleFil(); return; }            // simple tap : cycle des niveaux
-    const h=hGlisse||f.getBoundingClientRect().height||hauteurNiveau(filNiveau);   // glissé : niveau le plus proche
-    const cibles=['repos','mi','plein'];
-    filNiveau=cibles.reduce((a,b)=> Math.abs(hauteurNiveau(b)-h)<Math.abs(hauteurNiveau(a)-h)?b:a);
-    if(filNiveau!=='repos') filNonLusN=0;
+    clearTimeout(filTimer);
+    if(!moved){ cycleFil(); return; }        // simple tap : bascule
+    const v=vitesse(), seuil=0.35;
+    let cible;
+    if(v>seuil) cible='mi';                  // glissé rapide vers le haut : ouvrir
+    else if(v<-seuil) cible='repos';         // glissé rapide vers le bas : replier
+    else cible=(hFin>(REPLI+MI())/2)?'mi':'repos';
+    filNiveau=cible; if(cible!=='repos') filNonLusN=0;
     appliquerFil();
   }
-  ['fil'].forEach(()=>{});
   document.addEventListener('pointerdown',e=>{ const t=e.target&&e.target.closest?e.target:null; if(t&&t.closest('.fil-poignee, .fil-entete')) debut(e); });
   document.addEventListener('pointermove',mouvement);
   document.addEventListener('pointerup',fin);

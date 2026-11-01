@@ -466,11 +466,19 @@ function addDebugLog(message){
 function copyDebugLog(){ const a=document.getElementById('debug-log-text'); a.select(); document.execCommand('copy'); alert('Log copié.'); }
 function clearTravelHistory(){ if(confirm('Effacer les traces de déplacement ?')){ state.travelHistory=[]; renderDebugMap(); } }
 
+// Ordre des pages glissantes (de gauche à droite)
+const PAGE_ORDER=['vaisseau','route','debarquer','bestiaire','controle','debug'];
+let pageCourante=0;
+function allerPage(i){
+  pageCourante=Math.max(0,Math.min(PAGE_ORDER.length-1,i));
+  const t=document.getElementById('track'); if(t) t.style.transform=`translateX(-${pageCourante*100}%)`;
+}
 function switchTab(tabId){
   document.querySelectorAll('main').forEach(m=>m.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tabId).classList.add('active');
   const nav=document.getElementById('nav-'+tabId); if(nav) nav.classList.add('active');
+  const i=PAGE_ORDER.indexOf(tabId); if(i>=0) allerPage(i);
   if(tabId==='controle') renderControle();
   if(tabId==='bestiaire') initBestiaire();
   if(tabId==='debug'){ renderDebugMap(); document.getElementById('debug-log-text').value=state.debugLogs.join('\n'); }
@@ -3145,3 +3153,50 @@ function renderBandeauDetail(){
   renderShip=function(){ original(); renderBandeauDetail(); };
 })();
 renderBandeauDetail(); // premier affichage (le démarrage a eu lieu avant cette définition)
+
+
+// ==========================================
+// PAGES GLISSANTES : glisser à gauche / à droite pour changer de page
+// ==========================================
+(function(){
+  const zone=document.getElementById('pages');
+  const track=document.getElementById('track');
+  if(!zone||!track) return;
+  let actif=false, x0=0, y0=0, dx=0, t0=0, verrou=null;
+  function seuils(){
+    const w=zone.clientWidth||360;
+    return {dist:Math.max(14,w*0.04), distRapide:6, vitesse:0.12, verrou:3};
+  }
+  zone.addEventListener('pointerdown',e=>{
+    if(e.target.closest && e.target.closest('input, select, textarea')) return;
+    actif=true; verrou=null; x0=e.clientX; y0=e.clientY; dx=0; t0=performance.now();
+    track.style.transition='none';
+    try{ zone.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  zone.addEventListener('pointermove',e=>{
+    if(!actif) return;
+    const s=seuils(), ddx=e.clientX-x0, ddy=e.clientY-y0;
+    if(verrou===null && (Math.abs(ddx)>s.verrou || Math.abs(ddy)>s.verrou))
+      verrou = Math.abs(ddx)>Math.abs(ddy)*1.2 ? 'h' : 'v';
+    if(verrou!=='h') return;
+    dx=ddx;
+    const w=zone.clientWidth||360;
+    let p=-pageCourante*w+dx;
+    const min=-(PAGE_ORDER.length-1)*w;
+    if(p>0 || p<min) p=-pageCourante*w+dx*0.3;
+    track.style.transform=`translateX(${p}px)`;
+  });
+  function fin(){
+    if(!actif) return; actif=false;
+    track.style.transition='';
+    if(verrou!=='h'){ allerPage(pageCourante); return; }
+    const s=seuils(), duree=Math.max(1,performance.now()-t0), v=dx/duree;
+    let cible=pageCourante;
+    if(Math.abs(dx)>s.dist || (Math.abs(dx)>s.distRapide && Math.abs(v)>s.vitesse))
+      cible = pageCourante + (dx<0 ? 1 : -1);
+    cible=Math.max(0,Math.min(PAGE_ORDER.length-1,cible));
+    switchTab(PAGE_ORDER[cible]);
+  }
+  zone.addEventListener('pointerup',fin);
+  zone.addEventListener('pointercancel',fin);
+})();

@@ -60,6 +60,12 @@
   #bandeau .bd-equip{font-size:.8rem;color:var(--text-main,#1f2a36);margin-top:6px}
   #bandeau .containers{margin:0}
 </style>
+<style>
+  /* Pages glissantes : chaque section est une page de la piste horizontale */
+  #pages{position:relative;overflow:hidden;flex:1;min-height:0;display:flex;flex-direction:column;touch-action:pan-y}
+  #track{display:flex;height:100%;transition:transform .3s ease;will-change:transform}
+  #track > main{flex:0 0 100%;min-width:100%;height:100%;display:block !important;box-sizing:border-box}
+</style>
 </head>
 <body>
 <header>
@@ -93,6 +99,7 @@
 </header>
 <div id="scenario-banner" class="scenario-banner"></div>
 
+<div id="pages"><div id="track">
 <main id="tab-vaisseau" class="active">
   <div class="card">
     <h2>Exploration</h2>
@@ -450,7 +457,7 @@
     </div>
   </div>
 </main>
-
+</div></div>
 <!-- Barre de navigation complète avec les 7 onglets ajustés pour tenir sur l'écran -->
   <nav>
   <button onclick="switchTab('vaisseau')" id="nav-vaisseau"><span class="icon">⛵</span>Équipement</button>

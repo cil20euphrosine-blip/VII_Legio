@@ -66,9 +66,19 @@
   #track{display:flex;height:100%;transition:transform .3s ease;will-change:transform}
   #track > main{flex:0 0 100%;min-width:100%;height:100%;display:block !important;box-sizing:border-box}
 </style>
+<style>
+  #tabs-haut{position:static !important;display:flex;gap:6px;overflow-x:auto;padding:8px 12px;border:0;background:transparent}
+  #tabs-haut button{flex:0 0 auto;font:inherit;font-size:13px;background:#fff;color:#1f3d4a;border:1px solid #b8a886;border-radius:999px;padding:6px 12px}
+  #tabs-haut button.active{background:#1f3d4a;color:#fff;border-color:#1f3d4a}
+  body{padding-bottom:0 !important}
+  #fil{bottom:0 !important}
+  #test-badge{position:absolute;top:8px;left:8px;background:#b3263e;color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 7px;border-radius:6px;z-index:2}
+  header{position:relative}
+</style>
 </head>
 <body>
 <header>
+<div id="test-badge" style="display:none">VERSION TEST</div>
   <div class="header-top">
     <div>
       <h1>Decurio NOTIUS <span id="app-version" style="font-size:0.75rem; background:var(--accent-light); color:var(--accent); padding:2px 6px; border-radius:4px; vertical-align:middle;">v1.4.0</span></h1>
@@ -99,8 +109,159 @@
 </header>
 <div id="scenario-banner" class="scenario-banner"></div>
 
+<nav id="tabs-haut">
+  <button id="nav-route" onclick="switchTab('route')">Navigation</button>
+  <button id="nav-debarquer" onclick="switchTab('debarquer')">Mission</button>
+  <button id="nav-vaisseau" onclick="switchTab('vaisseau')">Équipement</button>
+  <button id="nav-planetes" onclick="switchTab('planetes')">Planètes</button>
+  <button id="nav-reglages" onclick="switchTab('reglages')">Réglages</button>
+</nav>
 <div id="pages"><div id="track">
-<main id="tab-vaisseau" class="active">
+<main id="tab-route">
+  <div class="card" style="padding-bottom:5px;">
+    <h2>Planètes repérées</h2>
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:15px;">Computers : <strong id="computers-available">1</strong> information disponible ce tour.<br><small><em>(Seules les planètes détectées par les radars ce tour sont analysables.)</em></small></p>
+    <div id="planets-container"></div>
+  </div>
+  <div class="card">
+    <h2>Déclarer la route</h2>
+    <div class="alert-box" style="font-weight:bold;text-align:center;">Poussée disponible : <span id="max-thrust">15</span> parsecs</div>
+    <div class="input-group">
+      <span style="font-size:.9rem;color:var(--text-muted);">Parsecs</span>
+      <div class="counter" id="dist-stepper" style="border-color:var(--accent);">
+        <button onclick="updateParsecsInput(-1)">−</button><span id="val-parsecs-input">1</span><button onclick="updateParsecsInput(1)">+</button>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Touchez une direction pour l'ajouter à la route</div>
+    <div class="route-grid" id="pave">
+      <button id="dir-NO" onclick="selectDir('NO')">NO</button><button id="dir-N" class="sel" onclick="selectDir('N')">N</button><button id="dir-NE" onclick="selectDir('NE')">NE</button>
+      <button id="dir-O" onclick="selectDir('O')">O</button><button class="center">vaisseau</button><button id="dir-E" onclick="selectDir('E')">E</button>
+      <button id="dir-SO" onclick="selectDir('SO')">SO</button><button id="dir-S" onclick="selectDir('S')">S</button><button id="dir-SE" onclick="selectDir('SE')">SE</button>
+      <div style="grid-column:span 3;display:flex;gap:5px;margin-top:5px;">
+        <button id="dir-HAUT" onclick="selectDir('HAUT')" style="flex:1;">▲ HAUT (4)</button>
+        <button id="dir-BAS" onclick="selectDir('BAS')" style="flex:1;">▼ BAS (4)</button>
+      </div>
+    </div>
+    <div style="margin-top:15px;margin-bottom:15px;">
+      <div style="font-size:.8rem;font-weight:bold;color:var(--text-muted);margin-bottom:5px;">ROUTE ACTUELLE</div>
+      <div class="route-display" id="segments-container"><span style="color:#aaa;font-style:italic;">Aucune</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-muted);margin-top:5px;">
+        <span>Poussée totale</span><span id="thrust-text">0 / 15 parsecs</span>
+      </div>
+      <div style="height:4px;background:#e8e4da;border-radius:2px;margin-top:5px;">
+        <div id="thrust-bar" style="height:100%;width:0%;background:var(--dark-teal);border-radius:2px;"></div>
+      </div>
+    </div>
+    <div style="display:none;">
+      <span style="font-weight:bold;font-size:.95rem;">Radars en exploration</span>
+      <div class="counter">
+        <button onclick="updateRadars(-1)">−</button><span id="val-route-radars">2</span><button onclick="updateRadars(1)">+</button>
+      </div>
+    </div>
+    <label class="radio-item">
+      <input type="checkbox" id="check-shields" checked onchange="setShields(this.checked)">
+      <span><strong>Boucliers activés pour ce tour</strong> (fixés une fois la route transmise)</span>
+    </label>
+    <div style="background:var(--bg-color);padding:15px;border-radius:8px;border:1px solid var(--border);">
+      <label class="radio-item" style="margin-bottom:15px;">
+        <input type="checkbox" id="check-landing">
+        <span><strong>Déclarer comme route d'atterrissage</strong></span>
+      </label>
+      <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled>Annoncer la route</button>
+            <button class="btn-primary" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:10px;" onclick="resetRoute()">Effacer la route</button>
+
+    </div>
+  </div>
+</main>
+<main id="tab-debarquer">
+  <div id="landing-content" style="display:none;">
+    <div class="card">
+      <h2>Atterrissage</h2>
+      <div class="alert-box" id="landing-status">Atterrissage en cours...</div>
+      <div style="display:flex;gap:10px;margin-bottom:15px;">
+        <div style="flex:1;background:#f4f4f4;padding:10px;border-radius:5px;">
+          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Boucliers</div>
+          <div style="font-weight:bold;" id="landing-shields">—</div>
+        </div>
+        <div style="flex:1;background:#f4f4f4;padding:10px;border-radius:5px;">
+          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Équipages</div>
+          <div style="font-weight:bold;" id="landing-crew">À bord</div>
+        </div>
+      </div>
+      <div id="behavior-selection">
+        <h4 style="margin-bottom:10px;font-size:.9rem;color:var(--accent);">Comportement d'atterrissage :</h4>
+        <label class="radio-item"><input type="radio" name="attitude" value="A" onchange="checkAttitude()"><span><strong>A</strong> Boucliers activés, sans tir</span></label>
+        <label class="radio-item"><input type="radio" name="attitude" value="B" onchange="checkAttitude()"><span><strong>B</strong> Boucliers activés, tir laser</span></label>
+        <label class="radio-item"><input type="radio" name="attitude" value="C" onchange="checkAttitude()"><span><strong>C</strong> Boucliers désactivés, équipages sans tir</span></label>
+        <label class="radio-item"><input type="radio" name="attitude" value="D" onchange="checkAttitude()"><span><strong>D</strong> Boucliers désactivés, équipages qui tirent</span></label>
+        <div id="behavior-alert" class="alert-danger" style="display:none;margin-bottom:15px;padding:10px;font-size:.85rem;"></div>
+        <button class="btn-primary" onclick="confirmBehavior()">Valider le comportement</button>
+      </div>
+      <div id="op-box" style="display:none;margin-top:15px;border-top:1px solid var(--border);padding-top:15px;">
+        <div style="font-family:monospace;font-size:12px;color:var(--text-muted);margin-bottom:8px;">DÉS DE L'ATTERRISSAGE · lancés par vous, résultat annoncé par le S.C.</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary" style="flex:1;" onclick="rollRisk()">Lancer risque (O)</button>
+          <button class="btn-primary" style="flex:1;" onclick="rollZone()">Lancer zone (P)</button>
+        </div>
+        <div id="zone-box" style="display:none;margin-top:10px;border:1px solid var(--accent);border-radius:8px;padding:8px;">
+          <div style="font-family:monospace;font-size:11px;color:var(--accent);margin-bottom:6px;">SI P = 8, 9 OU 0 · CHOISISSEZ LA ZONE</div>
+          <div class="vrow" id="zone-btns"></div>
+        </div>
+      </div>
+      <div id="ground-actions" style="display:none;margin-top:15px;border-top:1px solid var(--border);padding-top:15px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span style="font-weight:bold;font-size:.9rem;">Équipages à débarquer :</span>
+          <div class="counter">
+            <button onclick="changeDisembarkCount(-1)">−</button>
+            <span id="val-disembark-count">1</span>
+            <button onclick="changeDisembarkCount(1)">+</button>
+          </div>
+        </div>
+        <button id="btn-disembark" class="btn-primary" onclick="disembark()" style="background:var(--dark-teal);">Débarquer les équipages sélectionnés</button>
+      </div>
+    </div>
+    <div id="mission-panel" style="display:none;">
+      <div class="alien-panel">
+        <h3 id="alien-title">Extrasolaires</h3>
+        <div class="subtitle" id="alien-sub">Présents · F.C. 5 (provisoire, en attente du Guide)</div>
+        <div class="alien-stats">
+          <div><span class="num" id="alien-count">2</span><span class="lbl">Présents</span></div>
+          <div><span class="num" id="alien-wounded">0</span><span class="lbl">Blessés</span></div>
+        </div>
+      </div>
+      <div class="card" style="padding:15px 0;border:none;background:transparent;">
+        <div id="combat-log" style="font-size:.85rem;background:#fdfaf3;padding:10px;border-radius:5px;border:1px solid var(--border);margin-bottom:15px;display:none;"></div>
+        <div class="mission-btn" onclick="startCombat()" id="btn-combat">
+          <div><span class="m-title">Élimination physique</span><span class="m-desc">Tir de la Légion (A), riposte (B). Valeur de mission : Guide</span></div>
+          <span class="m-tab">TAB. A-B</span>
+        </div>
+        <div class="mission-btn" onclick="startIntim()" id="btn-intim">
+          <div><span class="m-title">Intimidation</span><span class="m-desc">Sub civiles ou civiles · tableau F puis G</span></div>
+          <span class="m-tab">TAB. F-G</span>
+        </div>
+        <div class="mission-btn" onclick="startComm()" id="btn-comm">
+          <div><span class="m-title">Commerce</span><span class="m-desc">Marchands uniquement · tableau H</span></div>
+          <span class="m-tab">TAB. H</span>
+        </div>
+        <div class="mission-btn" onclick="startSci()" id="btn-sci" style="display:none">
+          <div><span class="m-title">Recherche scientifique</span><span class="m-desc">Sub Civiles ou Civiles · dé 6 + savant − technologie</span></div>
+          <span class="m-tab">TAB. S</span>
+        </div>
+        <div class="mission-btn disabled">
+          <div><span class="m-title">Alliance</span><span class="m-desc">Réservée aux Sapiens Civiles (F. alliance)</span></div>
+          <span class="m-tab">TAB. E</span>
+        </div>
+        <button class="btn-primary" onclick="passerTourSurPlanete()" style="margin-top:15px;background:var(--dark-teal);">Passer un tour sur la planète</button>
+        <button class="btn-primary" onclick="rechercherSurPlace()" style="margin-top:8px;background:var(--dark-teal);">Rechercher les Extrasolaires (sur place)</button>
+        <button class="btn-primary" onclick="retenterAtterrissage()" style="margin-top:8px;background:var(--dark-teal);">Perdre un tour et retenter un atterrissage</button>
+        <button id="btn-reembark" class="btn-primary" onclick="reembark()" style="display:none;margin-top:15px;background:var(--dark-teal);">Réembarquer les équipages</button>
+        <button id="btn-orbit" class="btn-primary" onclick="endMission()" style="display:none;margin-top:15px;">Quitter l'orbite / décoller</button>
+      </div>
+    </div>
+  </div>
+  <div id="no-landing" class="card" style="text-align:center;padding:40px 20px;"><p style="color:#888;font-size:.9rem;">Aucun atterrissage en cours.</p></div>
+</main>
+<main id="tab-vaisseau">
   <div class="card">
     <h2>Exploration</h2>
     <div class="stat-row">
@@ -243,156 +404,36 @@
     <p id="message-sauvegarde" role="status" style="font-size:.85rem;margin-top:10px;color:var(--accent);"></p>
   </div>
 </main>
-
-<main id="tab-route">
-  <div class="card" style="padding-bottom:5px;">
-    <h2>Planètes repérées</h2>
-    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:15px;">Computers : <strong id="computers-available">1</strong> information disponible ce tour.<br><small><em>(Seules les planètes détectées par les radars ce tour sont analysables.)</em></small></p>
-    <div id="planets-container"></div>
+<main id="tab-planetes">
+<div class="card">
+  <h2>PLANÈTES</h2>
+  <div class="onglets-pl" style="display:flex;gap:6px;margin-bottom:10px;">
+    <button id="pl-vues" class="sel" onclick="setVuePlanetes('vues')">Vues</button>
+    <button id="pl-connues" onclick="setVuePlanetes('connues')">Connues</button>
   </div>
-  <div class="card">
-    <h2>Déclarer la route</h2>
-    <div class="alert-box" style="font-weight:bold;text-align:center;">Poussée disponible : <span id="max-thrust">15</span> parsecs</div>
-    <div class="input-group">
-      <span style="font-size:.9rem;color:var(--text-muted);">Parsecs</span>
-      <div class="counter" id="dist-stepper" style="border-color:var(--accent);">
-        <button onclick="updateParsecsInput(-1)">−</button><span id="val-parsecs-input">1</span><button onclick="updateParsecsInput(1)">+</button>
-      </div>
-    </div>
-    <div style="text-align:center;font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Touchez une direction pour l'ajouter à la route</div>
-    <div class="route-grid" id="pave">
-      <button id="dir-NO" onclick="selectDir('NO')">NO</button><button id="dir-N" class="sel" onclick="selectDir('N')">N</button><button id="dir-NE" onclick="selectDir('NE')">NE</button>
-      <button id="dir-O" onclick="selectDir('O')">O</button><button class="center">vaisseau</button><button id="dir-E" onclick="selectDir('E')">E</button>
-      <button id="dir-SO" onclick="selectDir('SO')">SO</button><button id="dir-S" onclick="selectDir('S')">S</button><button id="dir-SE" onclick="selectDir('SE')">SE</button>
-      <div style="grid-column:span 3;display:flex;gap:5px;margin-top:5px;">
-        <button id="dir-HAUT" onclick="selectDir('HAUT')" style="flex:1;">▲ HAUT (4)</button>
-        <button id="dir-BAS" onclick="selectDir('BAS')" style="flex:1;">▼ BAS (4)</button>
-      </div>
-    </div>
-    <div style="margin-top:15px;margin-bottom:15px;">
-      <div style="font-size:.8rem;font-weight:bold;color:var(--text-muted);margin-bottom:5px;">ROUTE ACTUELLE</div>
-      <div class="route-display" id="segments-container"><span style="color:#aaa;font-style:italic;">Aucune</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-muted);margin-top:5px;">
-        <span>Poussée totale</span><span id="thrust-text">0 / 15 parsecs</span>
-      </div>
-      <div style="height:4px;background:#e8e4da;border-radius:2px;margin-top:5px;">
-        <div id="thrust-bar" style="height:100%;width:0%;background:var(--dark-teal);border-radius:2px;"></div>
-      </div>
-    </div>
-    <div style="display:none;">
-      <span style="font-weight:bold;font-size:.95rem;">Radars en exploration</span>
-      <div class="counter">
-        <button onclick="updateRadars(-1)">−</button><span id="val-route-radars">2</span><button onclick="updateRadars(1)">+</button>
-      </div>
-    </div>
-    <label class="radio-item">
-      <input type="checkbox" id="check-shields" checked onchange="setShields(this.checked)">
-      <span><strong>Boucliers activés pour ce tour</strong> (fixés une fois la route transmise)</span>
-    </label>
-    <div style="background:var(--bg-color);padding:15px;border-radius:8px;border:1px solid var(--border);">
-      <label class="radio-item" style="margin-bottom:15px;">
-        <input type="checkbox" id="check-landing">
-        <span><strong>Déclarer comme route d'atterrissage</strong></span>
-      </label>
-      <button class="btn-primary" onclick="executeRoute()" id="btn-execute" disabled>Annoncer la route</button>
-      <button class="btn-primary" onclick="passTurn()" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:8px;">Passer le tour sur place</button>
-      <button class="btn-primary" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);margin-top:10px;" onclick="resetRoute()">Effacer la route</button>
-
-    </div>
+  <div id="pl-liste"></div>
+  <div id="pl-passer" style="display:none;margin-top:12px;">
+    <button class="btn-primary" onclick="passTurn()" style="background:transparent;color:var(--dark-teal);border:1px solid var(--border);width:100%;">Passer le tour sur place</button>
   </div>
+</div>
 </main>
-
-
-
-<main id="tab-debarquer">
-  <div id="landing-content" style="display:none;">
-    <div class="card">
-      <h2>Atterrissage</h2>
-      <div class="alert-box" id="landing-status">Atterrissage en cours...</div>
-      <div style="display:flex;gap:10px;margin-bottom:15px;">
-        <div style="flex:1;background:#f4f4f4;padding:10px;border-radius:5px;">
-          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Boucliers</div>
-          <div style="font-weight:bold;" id="landing-shields">—</div>
-        </div>
-        <div style="flex:1;background:#f4f4f4;padding:10px;border-radius:5px;">
-          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:5px;">Équipages</div>
-          <div style="font-weight:bold;" id="landing-crew">À bord</div>
-        </div>
-      </div>
-      <div id="behavior-selection">
-        <h4 style="margin-bottom:10px;font-size:.9rem;color:var(--accent);">Comportement d'atterrissage :</h4>
-        <label class="radio-item"><input type="radio" name="attitude" value="A" onchange="checkAttitude()"><span><strong>A</strong> Boucliers activés, sans tir</span></label>
-        <label class="radio-item"><input type="radio" name="attitude" value="B" onchange="checkAttitude()"><span><strong>B</strong> Boucliers activés, tir laser</span></label>
-        <label class="radio-item"><input type="radio" name="attitude" value="C" onchange="checkAttitude()"><span><strong>C</strong> Boucliers désactivés, équipages sans tir</span></label>
-        <label class="radio-item"><input type="radio" name="attitude" value="D" onchange="checkAttitude()"><span><strong>D</strong> Boucliers désactivés, équipages qui tirent</span></label>
-        <div id="behavior-alert" class="alert-danger" style="display:none;margin-bottom:15px;padding:10px;font-size:.85rem;"></div>
-        <button class="btn-primary" onclick="confirmBehavior()">Valider le comportement</button>
-      </div>
-      <div id="op-box" style="display:none;margin-top:15px;border-top:1px solid var(--border);padding-top:15px;">
-        <div style="font-family:monospace;font-size:12px;color:var(--text-muted);margin-bottom:8px;">DÉS DE L'ATTERRISSAGE · lancés par vous, résultat annoncé par le S.C.</div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-primary" style="flex:1;" onclick="rollRisk()">Lancer risque (O)</button>
-          <button class="btn-primary" style="flex:1;" onclick="rollZone()">Lancer zone (P)</button>
-        </div>
-        <div id="zone-box" style="display:none;margin-top:10px;border:1px solid var(--accent);border-radius:8px;padding:8px;">
-          <div style="font-family:monospace;font-size:11px;color:var(--accent);margin-bottom:6px;">SI P = 8, 9 OU 0 · CHOISISSEZ LA ZONE</div>
-          <div class="vrow" id="zone-btns"></div>
-        </div>
-      </div>
-      <div id="ground-actions" style="display:none;margin-top:15px;border-top:1px solid var(--border);padding-top:15px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <span style="font-weight:bold;font-size:.9rem;">Équipages à débarquer :</span>
-          <div class="counter">
-            <button onclick="changeDisembarkCount(-1)">−</button>
-            <span id="val-disembark-count">1</span>
-            <button onclick="changeDisembarkCount(1)">+</button>
-          </div>
-        </div>
-        <button id="btn-disembark" class="btn-primary" onclick="disembark()" style="background:var(--dark-teal);">Débarquer les équipages sélectionnés</button>
-      </div>
-    </div>
-    <div id="mission-panel" style="display:none;">
-      <div class="alien-panel">
-        <h3 id="alien-title">Extrasolaires</h3>
-        <div class="subtitle" id="alien-sub">Présents · F.C. 5 (provisoire, en attente du Guide)</div>
-        <div class="alien-stats">
-          <div><span class="num" id="alien-count">2</span><span class="lbl">Présents</span></div>
-          <div><span class="num" id="alien-wounded">0</span><span class="lbl">Blessés</span></div>
-        </div>
-      </div>
-      <div class="card" style="padding:15px 0;border:none;background:transparent;">
-        <div id="combat-log" style="font-size:.85rem;background:#fdfaf3;padding:10px;border-radius:5px;border:1px solid var(--border);margin-bottom:15px;display:none;"></div>
-        <div class="mission-btn" onclick="startCombat()" id="btn-combat">
-          <div><span class="m-title">Élimination physique</span><span class="m-desc">Tir de la Légion (A), riposte (B). Valeur de mission : Guide</span></div>
-          <span class="m-tab">TAB. A-B</span>
-        </div>
-        <div class="mission-btn" onclick="startIntim()" id="btn-intim">
-          <div><span class="m-title">Intimidation</span><span class="m-desc">Sub civiles ou civiles · tableau F puis G</span></div>
-          <span class="m-tab">TAB. F-G</span>
-        </div>
-        <div class="mission-btn" onclick="startComm()" id="btn-comm">
-          <div><span class="m-title">Commerce</span><span class="m-desc">Marchands uniquement · tableau H</span></div>
-          <span class="m-tab">TAB. H</span>
-        </div>
-        <div class="mission-btn" onclick="startSci()" id="btn-sci" style="display:none">
-          <div><span class="m-title">Recherche scientifique</span><span class="m-desc">Sub Civiles ou Civiles · dé 6 + savant − technologie</span></div>
-          <span class="m-tab">TAB. S</span>
-        </div>
-        <div class="mission-btn disabled">
-          <div><span class="m-title">Alliance</span><span class="m-desc">Réservée aux Sapiens Civiles (F. alliance)</span></div>
-          <span class="m-tab">TAB. E</span>
-        </div>
-        <button class="btn-primary" onclick="passerTourSurPlanete()" style="margin-top:15px;background:var(--dark-teal);">Passer un tour sur la planète</button>
-        <button class="btn-primary" onclick="rechercherSurPlace()" style="margin-top:8px;background:var(--dark-teal);">Rechercher les Extrasolaires (sur place)</button>
-        <button class="btn-primary" onclick="retenterAtterrissage()" style="margin-top:8px;background:var(--dark-teal);">Perdre un tour et retenter un atterrissage</button>
-        <button id="btn-reembark" class="btn-primary" onclick="reembark()" style="display:none;margin-top:15px;background:var(--dark-teal);">Réembarquer les équipages</button>
-        <button id="btn-orbit" class="btn-primary" onclick="endMission()" style="display:none;margin-top:15px;">Quitter l'orbite / décoller</button>
-      </div>
-    </div>
+<main id="tab-reglages">
+<div class="card">
+  <h2>SENSIBILITÉ DU GLISSEMENT</h2>
+  <div style="display:flex;gap:6px;">
+    <button data-s="faible" onclick="regler('sensibilite','faible')">Faible</button>
+    <button data-s="moyen" onclick="regler('sensibilite','moyen')">Moyen</button>
+    <button data-s="eleve" onclick="regler('sensibilite','eleve')">Élevé</button>
   </div>
-  <div id="no-landing" class="card" style="text-align:center;padding:40px 20px;"><p style="color:#888;font-size:.9rem;">Aucun atterrissage en cours.</p></div>
+  <p style="font-size:.8rem;color:var(--text-muted);margin-top:6px;">Plus le réglage est élevé, plus un petit geste change de page.</p>
+</div>
+<div class="card">
+  <h2>OUTILS</h2>
+  <button class="btn-secondary" onclick="switchTab('bestiaire')">Bestiaire</button>
+  <button class="btn-secondary" style="margin-top:8px;" onclick="switchTab('controle')">Contrôle</button>
+  <button class="btn-secondary" style="margin-top:8px;" onclick="reinitialiserReglages()">Réinitialiser les réglages</button>
+</div>
 </main>
-
 <main id="tab-bestiaire">
   <div class="card">
     <h2>Bestiaire / Fiches des Extrasolaires</h2>
@@ -409,8 +450,6 @@
     </div>
   </div>
 </main>
-
-
 <main id="tab-controle">
   <p id="version-controle" style="font-size:.8rem;color:var(--text-muted);text-align:center;margin:0 0 10px;"></p>
   <div class="card">
@@ -436,7 +475,6 @@
     <button class="btn-secondary" style="margin-top:10px;" onclick="exportOpLog()">Exporter le journal (JSON)</button>
   </div>
 </main>
-
 <main id="tab-debug">
   <div class="card">
     <h2>Carte spatiale (debug)</h2>
@@ -457,15 +495,16 @@
     </div>
   </div>
 </main>
+
+
+
+
+
+
+
+
 </div></div>
-<!-- Barre de navigation complète avec les 7 onglets ajustés pour tenir sur l'écran -->
-  <nav>
-  <button onclick="switchTab('vaisseau')" id="nav-vaisseau"><span class="icon">⛵</span>Équipement</button>
-  <button onclick="switchTab('route')" id="nav-route"><span class="icon">◎</span>Navigation</button>
-  <button onclick="switchTab('debarquer')" id="nav-debarquer"><span class="icon">⬇</span>Mission</button>
-  <button onclick="switchTab('bestiaire')" id="nav-bestiaire"><span class="icon">👾</span>Bestiaire</button>
-  <button onclick="switchTab('controle')" id="nav-controle"><span class="icon">✔</span>Contrôle</button>
-</nav>
+
 
 <script src="script.js?v=1.4.0"></script>
 <div id="fil" class="repos">

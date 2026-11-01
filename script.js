@@ -466,11 +466,15 @@ function addDebugLog(message){
 function copyDebugLog(){ const a=document.getElementById('debug-log-text'); a.select(); document.execCommand('copy'); alert('Log copié.'); }
 function clearTravelHistory(){ if(confirm('Effacer les traces de déplacement ?')){ state.travelHistory=[]; renderDebugMap(); } }
 
-// Ordre des pages glissantes (de gauche à droite)
-const PAGE_ORDER=['vaisseau','route','debarquer','bestiaire','controle','debug'];
+// Ordre des pages glissantes : celui des sections dans la piste (de gauche à droite)
+function ordrePages(){
+  const t=document.getElementById('track');
+  return t ? Array.from(t.children).map(m=>m.id.replace('tab-','')) : [];
+}
 let pageCourante=0;
 function allerPage(i){
-  pageCourante=Math.max(0,Math.min(PAGE_ORDER.length-1,i));
+  const n=ordrePages().length; if(!n) return;
+  pageCourante=Math.max(0,Math.min(n-1,i));
   const t=document.getElementById('track'); if(t) t.style.transform=`translateX(-${pageCourante*100}%)`;
 }
 function switchTab(tabId){
@@ -478,7 +482,9 @@ function switchTab(tabId){
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tabId).classList.add('active');
   const nav=document.getElementById('nav-'+tabId); if(nav) nav.classList.add('active');
-  const i=PAGE_ORDER.indexOf(tabId); if(i>=0) allerPage(i);
+  const i=ordrePages().indexOf(tabId); if(i>=0) allerPage(i);
+  if(tabId==='planetes') renderPagePlanetes();
+  if(tabId==='reglages') majReglagesUI();
   if(tabId==='controle') renderControle();
   if(tabId==='bestiaire') initBestiaire();
   if(tabId==='debug'){ renderDebugMap(); document.getElementById('debug-log-text').value=state.debugLogs.join('\n'); }
@@ -3165,7 +3171,7 @@ renderBandeauDetail(); // premier affichage (le démarrage a eu lieu avant cette
   let actif=false, x0=0, y0=0, dx=0, t0=0, verrou=null;
   function seuils(){
     const w=zone.clientWidth||360;
-    return {dist:Math.max(14,w*0.04), distRapide:6, vitesse:0.12, verrou:3};
+    return seuilsGlissement(w);
   }
   zone.addEventListener('pointerdown',e=>{
     if(e.target.closest && e.target.closest('input, select, textarea')) return;
@@ -3182,7 +3188,7 @@ renderBandeauDetail(); // premier affichage (le démarrage a eu lieu avant cette
     dx=ddx;
     const w=zone.clientWidth||360;
     let p=-pageCourante*w+dx;
-    const min=-(PAGE_ORDER.length-1)*w;
+    const min=-(ordrePages().length-1)*w;
     if(p>0 || p<min) p=-pageCourante*w+dx*0.3;
     track.style.transform=`translateX(${p}px)`;
   });
@@ -3194,9 +3200,84 @@ renderBandeauDetail(); // premier affichage (le démarrage a eu lieu avant cette
     let cible=pageCourante;
     if(Math.abs(dx)>s.dist || (Math.abs(dx)>s.distRapide && Math.abs(v)>s.vitesse))
       cible = pageCourante + (dx<0 ? 1 : -1);
-    cible=Math.max(0,Math.min(PAGE_ORDER.length-1,cible));
-    switchTab(PAGE_ORDER[cible]);
+    const ordre=ordrePages();
+    cible=Math.max(0,Math.min(ordre.length-1,cible));
+    switchTab(ordre[cible]);
   }
   zone.addEventListener('pointerup',fin);
   zone.addEventListener('pointercancel',fin);
+})();
+
+
+// ==========================================
+// RÉGLAGES (sensibilité du glissement, mémorisée dans le navigateur)
+// ==========================================
+const REGLAGES_DEFAUT={sensibilite:'eleve'};
+let REGLAGES={...REGLAGES_DEFAUT};
+try{ const r=JSON.parse(localStorage.getItem('decurio_reglages')||'null'); if(r) REGLAGES={...REGLAGES_DEFAUT,...r}; }catch(_){}
+function sauverReglages(){ try{ localStorage.setItem('decurio_reglages',JSON.stringify(REGLAGES)); }catch(_){} }
+function regler(cle,valeur){ REGLAGES[cle]=valeur; sauverReglages(); majReglagesUI(); }
+function reinitialiserReglages(){ REGLAGES={...REGLAGES_DEFAUT}; sauverReglages(); majReglagesUI(); }
+function majReglagesUI(){
+  document.querySelectorAll('#tab-reglages button[data-s]').forEach(b=>{
+    const on=b.dataset.s===REGLAGES.sensibilite;
+    b.style.background=on?'var(--dark-teal)':'#fff'; b.style.color=on?'#fff':'var(--dark-teal)';
+  });
+}
+function seuilsGlissement(largeur){
+  const r={
+    faible:{dist:Math.max(40,largeur*0.15), distRapide:16, vitesse:0.3, verrou:6},
+    moyen: {dist:Math.max(24,largeur*0.08), distRapide:10, vitesse:0.2, verrou:4},
+    eleve: {dist:Math.max(14,largeur*0.04), distRapide:6,  vitesse:0.12, verrou:3}
+  };
+  return r[REGLAGES.sensibilite]||r.eleve;
+}
+
+// ==========================================
+// PAGE PLANÈTES : vues « en portée » et « connues », à partir de l'état réel
+// ==========================================
+let vuePlanetes='vues';
+function setVuePlanetes(v){
+  vuePlanetes=v;
+  document.getElementById('pl-vues').className=v==='vues'?'sel':'';
+  document.getElementById('pl-connues').className=v==='connues'?'sel':'';
+  renderPagePlanetes();
+}
+function statutPlanete(p){
+  if(p.done) return 'quittee';
+  if(state.observablePlanets && state.observablePlanets.includes(p.id)) return 'portee';
+  return 'connue';
+}
+function renderPagePlanetes(){
+  const liste=document.getElementById('pl-liste'); if(!liste) return;
+  const libelle={portee:'en portée',connue:'connue hors portée',quittee:'quittée'};
+  const decouvertes=(state.planets||[]).filter(p=>p.discovered && p.id!==0);
+  const affichees=vuePlanetes==='vues' ? decouvertes.filter(p=>statutPlanete(p)==='portee') : decouvertes;
+  liste.innerHTML = affichees.map(p=>{
+    const st=statutPlanete(p);
+    const niv=p.infoLevel||0;
+    const bars=[1,2,3,4,5,6].map(k=>`<i style="flex:1;height:6px;border-radius:3px;background:${k<=niv?'#1f3d4a':'#ddd'}"></i>`).join('');
+    const peutDemander = st==='portee' && niv<6;
+    return `<div class="pl-ligne" onclick="ouvrirFichePlanete(${p.id})" style="background:#fffdf8;border:1px solid var(--border);border-radius:12px;padding:9px;margin-bottom:8px;cursor:pointer;">
+      <div style="display:flex;justify-content:space-between;font-weight:600;font-size:13px;"><span>Planète #${p.id}</span><span style="font-size:10px;padding:2px 6px;border-radius:6px;background:#eef3f5;">${libelle[st]}</span></div>
+      <div style="display:flex;gap:4px;margin-top:6px;">${bars}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Informations : ${niv}/6</div>
+      <button ${peutDemander?'':'disabled'} onclick="event.stopPropagation();requestInfo(${p.id});renderPagePlanetes();" style="margin-top:6px;font-size:12px;">Demander une information</button>
+    </div>`;
+  }).join('') || '<div style="color:#888;font-size:.85rem;">Aucune planète dans cette vue.</div>';
+  const passer=document.getElementById('pl-passer');
+  if(passer) passer.style.display = state.isInFlight ? '' : 'none';
+}
+(function(){
+  const original=renderPlanets;
+  renderPlanets=function(){ original(); renderPagePlanetes(); };
+})();
+
+// ==========================================
+// BADGE « VERSION TEST » : affiché seulement si l'adresse contient ?test=1
+// ==========================================
+(function(){
+  if(/[?&]test=1/.test(location.search)){
+    const b=document.getElementById('test-badge'); if(b) b.style.display='';
+  }
 })();

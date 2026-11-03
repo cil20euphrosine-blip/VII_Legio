@@ -1,7 +1,7 @@
 // ==========================================
-// CONSTANTES & REGISTRES (Version v1.4.0 - Règlements UC & SC Intégraux)
+// CONSTANTES & REGISTRES (Version v1.3.20 - Règlements UC & SC Intégraux)
 // ==========================================
-const APP_VERSION = "v1.4.0";
+const APP_VERSION = "v1.3.20";
 const DEBUG = false;
 const SHIPS = {
   FROMBOLA:{level:0,cont:10,ppr:5,radMax:2,resMax:3,eqMin:1,promo:6,grade:'Decurio'},
@@ -466,60 +466,23 @@ function addDebugLog(message){
 function copyDebugLog(){ const a=document.getElementById('debug-log-text'); a.select(); document.execCommand('copy'); alert('Log copié.'); }
 function clearTravelHistory(){ if(confirm('Effacer les traces de déplacement ?')){ state.travelHistory=[]; renderDebugMap(); } }
 
-// Ordre des pages glissantes : celui des sections dans la piste (de gauche à droite)
-function ordrePages(){
-  const t=document.getElementById('track');
-  return t ? Array.from(t.children).map(m=>m.id.replace('tab-','')) : [];
-}
-let pageCourante=0;
-function allerPage(i){
-  const n=ordrePages().length; if(!n) return;
-  pageCourante=Math.max(0,Math.min(n-1,i));
-  const t=document.getElementById('track'); if(t) t.style.transform=`translateX(-${pageCourante*100}%)`;
-}
 function switchTab(tabId){
   document.querySelectorAll('main').forEach(m=>m.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tabId).classList.add('active');
   const nav=document.getElementById('nav-'+tabId); if(nav) nav.classList.add('active');
-  const i=ordrePages().indexOf(tabId); if(i>=0) allerPage(i);
-  if(tabId==='planetes') renderPagePlanetes();
-  if(tabId==='reglages') majReglagesUI();
   if(tabId==='controle') renderControle();
   if(tabId==='bestiaire') initBestiaire();
   if(tabId==='debug'){ renderDebugMap(); document.getElementById('debug-log-text').value=state.debugLogs.join('\n'); }
 }
 
-function log(sender,text,pid){
+function log(sender,text){
   const c=document.getElementById('log-container'); const div=document.createElement('div');
   div.className=`log-entry ${sender==='SPACE COMPUTER'?'log-sc':'log-uc'}`;
-  if(pid!==undefined && pid!==null){ div.dataset.planet=String(pid); div.classList.add('log-planete'); }
   div.innerHTML=`<div class="log-sender">${sender}</div><div>${text}</div>`;
   c.prepend(div);
-  filNonLus(sender);
+  if(window.PopupSMS) window.PopupSMS.add(sender,text); // pop-up SMS (popup-sms.js)
   scheduleAutosave();
-}
-
-// Fil d'échanges : deux niveaux (repos / mi-hauteur)
-let filNiveau='repos', filNonLusN=0, filTimer=null;
-function appliquerFil(){
-  const f=document.getElementById('fil'); if(!f) return;
-  f.className=filNiveau;
-  const b=document.getElementById('fil-badge');
-  if(b){ b.style.display=filNonLusN>0?'':'none'; b.textContent=filNonLusN; }
-}
-function cycleFil(){ filNiveau=filNiveau==='repos'?'mi':'repos'; if(filNiveau!=='repos') filNonLusN=0; appliquerFil(); }
-function ouvrirFil(niv){ filNiveau=niv||'mi'; filNonLusN=0; appliquerFil(); }
-function filNonLus(sender){
-  if(filNiveau!=='repos'){ appliquerFil(); return; }
-  filNonLusN++;
-  if(sender==='SPACE COMPUTER'){
-    // nouvelle information du S.C. : déplier à mi-hauteur quelques secondes, puis replier
-    filNiveau='mi'; appliquerFil();
-    clearTimeout(filTimer); filTimer=setTimeout(()=>{ if(filNiveau==='mi'){ filNiveau='repos'; appliquerFil(); } },4000);
-    return;
-  }
-  appliquerFil();
 }
 
 function logCombat(text){ const cl=document.getElementById('combat-log'); cl.style.display='block'; cl.innerHTML=text; }
@@ -1006,18 +969,18 @@ function removeSegment(i){ state.route.segments.splice(i,1); renderSegments(); }
 
 // Sélection de la direction (pavé), puis ajout par « + segment »
 let selectedDir='N';
-function selectDir(d){ selectedDir=d; addSegment(d); renderPave(); updateSegmentControls(); }
+function selectDir(d){ selectedDir=d; renderPave(); updateSegmentControls(); }
 function renderPave(){
   ['NO','N','NE','O','E','SO','S','SE','HAUT','BAS'].forEach(d=>{
     const b=document.getElementById('dir-'+d); if(b) b.classList.toggle('sel', d===selectedDir);
   });
 }
-
+function addSelectedSegment(){ addSegment(selectedDir); updateSegmentControls(); }
 function updateSegmentControls(){
+  const vert=(selectedDir==='HAUT'||selectedDir==='BAS');
   const rem=getMaxThrust()-getCurrentTotal();
-  const pas=state.route.parsecsInput;
-  document.querySelectorAll('#pave button[id^="dir-"]').forEach(b=>{ const v=b.id.slice(4); const need=(v==='HAUT'||v==='BAS')?4:pas; b.disabled=(need>rem); });
-  const vert=false;
+  const pas=vert?4:state.route.parsecsInput;
+  const add=document.getElementById('btn-add-seg'); if(add) add.disabled=(rem<=0)||(pas>rem);
   document.querySelectorAll('#dist-stepper button').forEach(b=>b.disabled=vert);
   const st=document.getElementById('dist-stepper'); if(st) st.style.opacity=vert?0.4:1;
 }
@@ -1099,7 +1062,7 @@ function executeRoute(){
   state.isInFlight=true; renderShip();
   const isLanding=document.getElementById('check-landing').checked;
   const radar=state.route.radarsActive;
-  ouvrirFil('mi');
+  switchTab('journal');
   const routeStr=state.route.segments.map(s=>`${s.dir==='HAUT'||s.dir==='BAS'?'▲/▼ ':''}${s.parsecs} ${s.dir}`).join(' + ');
   log('OFFICIER COMMANDANT',`Tour ${state.turn} — Ma route : ${routeStr}. ${radar} radar(s). ${isLanding?"(route d'atterrissage)":''}`);
   addDebugLog(`>>> ROUTE : ${routeStr} (radars ${radar}, atterrissage ${isLanding})`);
@@ -1210,7 +1173,7 @@ function executeRoute(){
   }
   Object.keys(planetSightings).forEach(pid => {
     const info = planetSightings[pid];
-    log('SPACE COMPUTER', `Au <b>${info.step}e parsec</b>, repérage au plus près de la <b>Planète #${pid}</b> ${info.isNew ? '(inconnue)' : '(déjà connue)'}. Distance minimale : <b>${info.dist} parsec(s)</b>. Direction : <b>${info.dir}</b>.`, pid);
+    log('SPACE COMPUTER', `Au <b>${info.step}e parsec</b>, repérage au plus près de la <b>Planète #${pid}</b> ${info.isNew ? '(inconnue)' : '(déjà connue)'}. Distance minimale : <b>${info.dist} parsec(s)</b>. Direction : <b>${info.dir}</b>.`);
   });
 
   let finalPos = maxSteps>0 ? {...path[maxSteps-1]} : {...state.position};
@@ -1286,7 +1249,7 @@ function passTurn(){
         state.points += discPts;
         recordOp('Découverte', 'Planète #' + p.id + ' (inconnue)', {distance: dist}, '+' + discPts + ' pt(s)', '');
       }
-      log('SPACE COMPUTER', `Depuis votre position, repérage de la <b>Planète #${p.id}</b> ${isNew ? '(inconnue)' : '(déjà connue)'}. Distance minimale : <b>${dist} parsec(s)</b>. Direction : <b>${dirText}</b>.`, p.id);
+      log('SPACE COMPUTER', `Depuis votre position, repérage de la <b>Planète #${p.id}</b> ${isNew ? '(inconnue)' : '(déjà connue)'}. Distance minimale : <b>${dist} parsec(s)</b>. Direction : <b>${dirText}</b>.`);
     }
   });
   document.getElementById('display-points').innerText = state.points;
@@ -1343,7 +1306,7 @@ function renderPlanets(){
         F.C. ${fcText} · Missions : ${r.missions.join(', ')||'aucune'}${advDetails}
         ${r.notes? 'Notes : '+r.notes : ''}</div>`;
     }
-    h+=`<div class="planet-card"><div class="planet-header" style="cursor:pointer;" onclick="ouvrirFichePlanete(${p.id})"><h3>Planète ${p.id} ${p.done?'(Visitée)':''}</h3><span class="pts">+${Math.max(0,2-cls().level)} pt(s) de découverte</span></div>
+    h+=`<div class="planet-card"><div class="planet-header"><h3>Planète ${p.id} ${p.done?'(Visitée)':''}</h3><span class="pts">+${Math.max(0,2-cls().level)} pt(s) de découverte</span></div>
       <div class="planet-coords">Repérée au ${p.report?p.report.step:'?'}e parsec · ${p.report?p.report.dir:''} (niv. ${p.z})</div>
       <div class="progress-bars">${bars}</div>
       <div class="planet-data"><div class="label">Type</div><div class="value ${unk(ch.letter)}">${type}</div>
@@ -1379,7 +1342,7 @@ function requestInfo(id){
     p.dnsCount = (p.dnsCount||0) + 1;
     log('SPACE COMPUTER', `D.N.S. : données insuffisantes (${p.dnsCount}/${DNS_LIMITE}). La demande est perdue, à répéter.` + (p.dnsCount>=DNS_LIMITE ? ' Plus aucune information possible sur cette planète avant atterrissage.' : ''));
   }
-  else { log('SPACE COMPUTER',r.text,p.id); p.infoLevel = (r.status==='end') ? 6 : p.infoLevel+1; }
+  else { log('SPACE COMPUTER',r.text); p.infoLevel = (r.status==='end') ? 6 : p.infoLevel+1; }
   addDebugLog(`Planète #${id} : information ${p.infoLevel}/6`);
   renderPlanets();
 }
@@ -3040,244 +3003,3 @@ if(versionControle) versionControle.textContent = `Version de l'application : ${
 // Démarrage (en fin de fichier : toutes les constantes et fonctions sont déjà définies)
 if(!proposerReprise()) startGame();
 switchTab('vaisseau');
-
-
-// ==========================================
-// FICHE PLANÈTE : ouverte depuis un message du S.C. dans le fil
-// ==========================================
-let fichePlanete=null;
-function ouvrirFichePlanete(pid){
-  fichePlanete=pid; renderFichePlanete();
-  document.getElementById('fil').style.display='none';
-  document.getElementById('fiche-planete').style.display='block';
-  document.getElementById('fiche-planete').scrollTop=0;
-}
-function fermerFichePlanete(){
-  fichePlanete=null;
-  document.getElementById('fiche-planete').style.display='none';
-  document.getElementById('fil').style.display='';
-  if(typeof renderPlanets==='function') renderPlanets();
-}
-function raisonDemandeInfo(p){
-  if(!p) return 'Planète introuvable.';
-  if(p.infoLevel>=6) return 'Information complète.';
-  if(state.computersUsedThisTurn>=state.ship.computers) return 'Aucun ordinateur libre ce tour.';
-  if(!state.observablePlanets.includes(p.id)) return 'Hors de portée des radars ce tour : refaites passer le vaisseau près de la planète, ou passez un tour sur place.';
-  if((p.dnsCount||0)>=DNS_LIMITE) return 'Données insuffisantes atteintes : atterrissez pour continuer.';
-  return '';
-}
-function renderFichePlanete(){
-  const box=document.getElementById('fiche-planete-corps'); if(!box) return;
-  const p=state.planets.find(x=>x.id===fichePlanete);
-  const entrees=[...document.querySelectorAll('#log-container [data-planet="'+fichePlanete+'"]')].reverse().map(e=>`<div class="log-entry ${e.classList.contains('log-sc')?'log-sc':'log-uc'}">${e.innerHTML}</div>`).join('');
-  const niveau=p?p.infoLevel:0;
-  const bars=[0,1,2,3,4,5].map(i=>`<div class="p-bar ${i<niveau?'active':''}"></div>`).join('');
-  const raison=raisonDemandeInfo(p);
-  box.innerHTML=`<h3 style="margin:0 0 6px;color:var(--dark-teal);">Planète #${fichePlanete}</h3>
-    <div class="p-bars" style="display:flex;gap:4px;margin-bottom:8px;">${bars}</div>
-    <p style="font-size:.8rem;color:var(--text-muted);margin:0 0 6px;">Informations : ${niveau}/6</p>
-    <div style="max-height:40vh;overflow-y:auto;">${entrees||'<p style="color:#888;">Aucun message pour cette planète.</p>'}</div>
-    <button class="btn-primary" style="width:100%;margin-top:10px;" ${raison?'disabled':''} onclick="requestInfo(fichePlanete);renderFichePlanete();renderPlanets();">Demander une information</button>
-    ${raison?`<p style="font-size:.75rem;color:var(--text-muted);margin:6px 0 0;">${raison}</p>`:''}
-    <button style="width:100%;margin-top:8px;" onclick="fermerFichePlanete()">Fermer</button>`;
-}
-document.getElementById('log-container').addEventListener('click',e=>{
-  const el=e.target.closest('[data-planet]'); if(el) ouvrirFichePlanete(Number(el.dataset.planet));
-});
-
-
-// ==========================================
-// FIL D'ÉCHANGES : feuille de bas d'écran, deux positions (repli / mi-hauteur)
-// Geste : suit le doigt, résistance hors bornes, décision par vitesse
-// (glissé rapide) puis par position, animation de fixation.
-// ==========================================
-(function(){
-  const REPLI=64;
-  const MI=()=>Math.round(window.innerHeight*0.45);
-  let actif=false, y0=0, h0=0, moved=false, trace=[];
-  const hauteurCourante=(f)=> f.getBoundingClientRect().height || (filNiveau==='mi'?MI():REPLI);
-  function debut(e){
-    const f=document.getElementById('fil'); if(!f) return;
-    actif=true; moved=false; y0=e.clientY; h0=hauteurCourante(f); trace=[{t:performance.now(),y:e.clientY}];
-    f.classList.add('glisse');
-  }
-  function mouvement(e){
-    if(!actif) return;
-    const f=document.getElementById('fil'); if(!f) return;
-    const dy=y0-e.clientY; if(Math.abs(dy)>6) moved=true;
-    trace.push({t:performance.now(),y:e.clientY}); if(trace.length>8) trace.shift();
-    let h=h0+dy; const max=MI();
-    if(h>max) h=max+(h-max)*0.25;            // résistance au-delà de la mi-hauteur
-    if(h<REPLI) h=REPLI+(h-REPLI)*0.25;      // résistance sous la ligne repliée
-    f.style.height=Math.max(0,h)+'px';
-  }
-  function vitesse(){
-    if(trace.length<2) return 0;
-    const a=trace[0], b=trace[trace.length-1], dt=b.t-a.t;
-    return dt>0 ? (a.y-b.y)/dt : 0;          // px/ms, positif = vers le haut
-  }
-  function fin(){
-    if(!actif) return; actif=false;
-    const f=document.getElementById('fil'); if(!f) return;
-    const hFin=parseFloat(f.style.height)||hauteurCourante(f);
-    f.classList.remove('glisse'); f.style.height='';
-    clearTimeout(filTimer);
-    if(!moved){ cycleFil(); return; }        // simple tap : bascule
-    const v=vitesse(), seuil=0.35;
-    let cible;
-    if(v>seuil) cible='mi';                  // glissé rapide vers le haut : ouvrir
-    else if(v<-seuil) cible='repos';         // glissé rapide vers le bas : replier
-    else cible=(hFin>(REPLI+MI())/2)?'mi':'repos';
-    filNiveau=cible; if(cible!=='repos') filNonLusN=0;
-    appliquerFil();
-  }
-  document.addEventListener('pointerdown',e=>{ const t=e.target&&e.target.closest?e.target:null; if(t&&t.closest('.fil-poignee, .fil-entete')) debut(e); });
-  document.addEventListener('pointermove',mouvement);
-  document.addEventListener('pointerup',fin);
-  document.addEventListener('pointercancel',fin);
-})();
-
-
-// ==========================================
-// BANDEAU DU VAISSEAU : détail (déplié) et résumé (replié)
-// ==========================================
-function toggleBandeauVaisseau(){ const b=document.getElementById('bandeau'); if(b) b.classList.toggle('deplie'); }
-function renderBandeauDetail(){
-  const s=state.ship; if(!s || !document.getElementById('bd-grille')) return;
-  const tuiles=[['Lasers',s.lasers],['Boucliers',s.shields],['Radars',s.radars],['Ordinateurs',s.computers],['Réservoirs',s.tanks],['Modules',s.modules],['Coque (tour)',(state.hullHitsThisTurn||0)+' / 2'],['Équipages',s.crew]];
-  document.getElementById('bd-grille').innerHTML=tuiles.map(([n,v])=>`<div class="bd-tuile"><small>${n}</small><b>${v}</b></div>`).join('');
-  const eq=document.getElementById('bd-equip');
-  if(state.groundCrews && state.groundCrews.length){
-    eq.innerHTML='Équipages à terre : '+state.groundCrews.map((g,i)=>`E${i+1} ${'●'.repeat(Math.max(0,g.v))}${'○'.repeat(Math.max(0,3-g.v))}`).join(' · ');
-  } else {
-    eq.innerHTML=`Équipages à bord : ${s.crew} (3 hommes chacun)`;
-  }
-  const sum=document.getElementById('bd-equipages'); if(sum) sum.textContent='Équipages : '+s.crew;
-}
-(function(){
-  const original=renderShip;
-  renderShip=function(){ original(); renderBandeauDetail(); };
-})();
-renderBandeauDetail(); // premier affichage (le démarrage a eu lieu avant cette définition)
-
-
-// ==========================================
-// PAGES GLISSANTES : glisser à gauche / à droite pour changer de page
-// ==========================================
-(function(){
-  const zone=document.getElementById('pages');
-  const track=document.getElementById('track');
-  if(!zone||!track) return;
-  let actif=false, x0=0, y0=0, dx=0, t0=0, verrou=null;
-  function seuils(){
-    const w=zone.clientWidth||360;
-    return seuilsGlissement(w);
-  }
-  zone.addEventListener('pointerdown',e=>{
-    if(e.target.closest && e.target.closest('input, select, textarea')) return;
-    actif=true; verrou=null; x0=e.clientX; y0=e.clientY; dx=0; t0=performance.now();
-    track.style.transition='none';
-    try{ zone.setPointerCapture(e.pointerId); }catch(_){}
-  });
-  zone.addEventListener('pointermove',e=>{
-    if(!actif) return;
-    const s=seuils(), ddx=e.clientX-x0, ddy=e.clientY-y0;
-    if(verrou===null && (Math.abs(ddx)>s.verrou || Math.abs(ddy)>s.verrou))
-      verrou = Math.abs(ddx)>Math.abs(ddy)*1.2 ? 'h' : 'v';
-    if(verrou!=='h') return;
-    dx=ddx;
-    const w=zone.clientWidth||360;
-    let p=-pageCourante*w+dx;
-    const min=-(ordrePages().length-1)*w;
-    if(p>0 || p<min) p=-pageCourante*w+dx*0.3;
-    track.style.transform=`translateX(${p}px)`;
-  });
-  function fin(){
-    if(!actif) return; actif=false;
-    track.style.transition='';
-    if(verrou!=='h'){ allerPage(pageCourante); return; }
-    const s=seuils(), duree=Math.max(1,performance.now()-t0), v=dx/duree;
-    let cible=pageCourante;
-    if(Math.abs(dx)>s.dist || (Math.abs(dx)>s.distRapide && Math.abs(v)>s.vitesse))
-      cible = pageCourante + (dx<0 ? 1 : -1);
-    const ordre=ordrePages();
-    cible=Math.max(0,Math.min(ordre.length-1,cible));
-    switchTab(ordre[cible]);
-  }
-  zone.addEventListener('pointerup',fin);
-  zone.addEventListener('pointercancel',fin);
-})();
-
-
-// ==========================================
-// RÉGLAGES (sensibilité du glissement, mémorisée dans le navigateur)
-// ==========================================
-const REGLAGES_DEFAUT={sensibilite:'eleve'};
-let REGLAGES={...REGLAGES_DEFAUT};
-try{ const r=JSON.parse(localStorage.getItem('decurio_reglages')||'null'); if(r) REGLAGES={...REGLAGES_DEFAUT,...r}; }catch(_){}
-function sauverReglages(){ try{ localStorage.setItem('decurio_reglages',JSON.stringify(REGLAGES)); }catch(_){} }
-function regler(cle,valeur){ REGLAGES[cle]=valeur; sauverReglages(); majReglagesUI(); }
-function reinitialiserReglages(){ REGLAGES={...REGLAGES_DEFAUT}; sauverReglages(); majReglagesUI(); }
-function majReglagesUI(){
-  document.querySelectorAll('#tab-reglages button[data-s]').forEach(b=>{
-    const on=b.dataset.s===REGLAGES.sensibilite;
-    b.style.background=on?'var(--dark-teal)':'#fff'; b.style.color=on?'#fff':'var(--dark-teal)';
-  });
-}
-function seuilsGlissement(largeur){
-  const r={
-    faible:{dist:Math.max(40,largeur*0.15), distRapide:16, vitesse:0.3, verrou:6},
-    moyen: {dist:Math.max(24,largeur*0.08), distRapide:10, vitesse:0.2, verrou:4},
-    eleve: {dist:Math.max(14,largeur*0.04), distRapide:6,  vitesse:0.12, verrou:3}
-  };
-  return r[REGLAGES.sensibilite]||r.eleve;
-}
-
-// ==========================================
-// PAGE PLANÈTES : vues « en portée » et « connues », à partir de l'état réel
-// ==========================================
-let vuePlanetes='vues';
-function setVuePlanetes(v){
-  vuePlanetes=v;
-  document.getElementById('pl-vues').className=v==='vues'?'sel':'';
-  document.getElementById('pl-connues').className=v==='connues'?'sel':'';
-  renderPagePlanetes();
-}
-function statutPlanete(p){
-  if(p.done) return 'quittee';
-  if(state.observablePlanets && state.observablePlanets.includes(p.id)) return 'portee';
-  return 'connue';
-}
-function renderPagePlanetes(){
-  const liste=document.getElementById('pl-liste'); if(!liste) return;
-  const libelle={portee:'en portée',connue:'connue hors portée',quittee:'quittée'};
-  const decouvertes=(state.planets||[]).filter(p=>p.discovered && p.id!==0);
-  const affichees=vuePlanetes==='vues' ? decouvertes.filter(p=>statutPlanete(p)==='portee') : decouvertes;
-  liste.innerHTML = affichees.map(p=>{
-    const st=statutPlanete(p);
-    const niv=p.infoLevel||0;
-    const bars=[1,2,3,4,5,6].map(k=>`<i style="flex:1;height:6px;border-radius:3px;background:${k<=niv?'#1f3d4a':'#ddd'}"></i>`).join('');
-    const peutDemander = st==='portee' && niv<6;
-    return `<div class="pl-ligne" onclick="ouvrirFichePlanete(${p.id})" style="background:#fffdf8;border:1px solid var(--border);border-radius:12px;padding:9px;margin-bottom:8px;cursor:pointer;">
-      <div style="display:flex;justify-content:space-between;font-weight:600;font-size:13px;"><span>Planète #${p.id}</span><span style="font-size:10px;padding:2px 6px;border-radius:6px;background:#eef3f5;">${libelle[st]}</span></div>
-      <div style="display:flex;gap:4px;margin-top:6px;">${bars}</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Informations : ${niv}/6</div>
-      <button ${peutDemander?'':'disabled'} onclick="event.stopPropagation();requestInfo(${p.id});renderPagePlanetes();" style="margin-top:6px;font-size:12px;">Demander une information</button>
-    </div>`;
-  }).join('') || '<div style="color:#888;font-size:.85rem;">Aucune planète dans cette vue.</div>';
-  const passer=document.getElementById('pl-passer');
-  if(passer) passer.style.display = state.isInFlight ? '' : 'none';
-}
-(function(){
-  const original=renderPlanets;
-  renderPlanets=function(){ original(); renderPagePlanetes(); };
-})();
-
-// ==========================================
-// BADGE « VERSION TEST » : affiché seulement si l'adresse contient ?test=1
-// ==========================================
-(function(){
-  if(/[?&]test=1/.test(location.search)){
-    const b=document.getElementById('test-badge'); if(b) b.style.display='';
-  }
-})();
